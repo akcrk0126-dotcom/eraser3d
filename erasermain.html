@@ -52,10 +52,10 @@ sun.shadow.camera.top=40; sun.shadow.camera.bottom=-40;
 scene.add(sun);
 scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 
-// ===== 바닥 =====
+// ===== 바닥 (회색) =====
 const ground = new THREE.Mesh(
   new THREE.PlaneGeometry(200,200),
-  new THREE.MeshStandardMaterial({color:0x7ec850})
+  new THREE.MeshStandardMaterial({color:0x999999})
 );
 ground.rotation.x = -Math.PI/2;
 ground.receiveShadow = true;
@@ -154,7 +154,7 @@ let velY = 0;
 const GRAVITY = -0.02;
 const SPEED = 0.12;
 let grounded = true;
-let facing = 0; // y축 회전
+let facing = 0;
 
 function update(){
   let mx=0, mz=0;
@@ -189,7 +189,6 @@ function update(){
     grounded = true;
   }
 
-  // 카메라: 3인칭 추적
   const camOffset = new THREE.Vector3(0, 4.5, 7);
   const targetCamPos = player.position.clone().add(camOffset);
   camera.position.lerp(targetCamPos, 0.1);
