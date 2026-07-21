@@ -22,11 +22,162 @@
     color:white;font-weight:bold;font-size:14px;display:flex;align-items:center;justify-content:center;
     z-index:10;user-select:none;
   }
+  #joystick, #jumpBtn{ display:none; }
+
+  #loginScreen{
+    position:fixed;inset:0;z-index:100;
+    background:linear-gradient(160deg,#ffb6d9,#87ceeb);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Segoe UI',sans-serif;
+  }
+  #loginBox{
+    width:280px;background:rgba(255,255,255,0.92);border-radius:20px;
+    padding:28px 24px;box-shadow:0 10px 30px rgba(0,0,0,0.2);text-align:center;
+  }
+  #loginBox h1{margin:0 0 4px;font-size:22px;color:#ff6fa5;}
+  #loginBox p.sub{margin:0 0 18px;font-size:12px;color:#888;}
+  #loginBox input{
+    width:100%;box-sizing:border-box;padding:11px 12px;margin-bottom:10px;
+    border:2px solid #ffd3e6;border-radius:10px;font-size:14px;outline:none;
+  }
+  #loginBox input:focus{border-color:#ff6fa5;}
+  #loginBox button{
+    width:100%;padding:12px;margin-top:4px;border:none;border-radius:10px;
+    font-size:15px;font-weight:bold;cursor:pointer;
+  }
+  #btnLogin{background:#ff6fa5;color:#fff;}
+  #btnSignup{background:#fff;color:#ff6fa5;border:2px solid #ff6fa5 !important;margin-top:8px;}
+  #loginMsg{min-height:18px;font-size:12px;color:#e0446b;margin-top:8px;}
+  #loginLoading{font-size:12px;color:#999;margin-top:8px;}
 </style>
 </head>
 <body>
+<div id="loginScreen">
+  <div id="loginBox">
+    <h1>🧽 지우개 3D</h1>
+    <p class="sub">아이디와 비밀번호를 입력해줘</p>
+    <input id="idInput" type="text" placeholder="아이디" autocomplete="off">
+    <input id="pwInput" type="password" placeholder="비밀번호" autocomplete="off">
+    <button id="btnLogin">로그인</button>
+    <button id="btnSignup">회원가입</button>
+    <div id="loginMsg"></div>
+  </div>
+</div>
+
 <div id="joystick"><div id="stick"></div></div>
 <div id="jumpBtn">점프</div>
+
+<!-- ═══════════ FIREBASE SDK ═══════════ -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, set, get, onValue, update, remove, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBTL7nxEZb3xDcBG-WRIbeg0gujD0CjSk8",
+        authDomain: "eraser-gacha.firebaseapp.com",
+        databaseURL: "https://eraser-gacha-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "eraser-gacha",
+        storageBucket: "eraser-gacha.firebasestorage.app",
+        messagingSenderId: "697774293335",
+        appId: "1:697774293335:web:296881f403fe26876d7e12",
+        measurementId: "G-K2ZYD4S5RF"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const fbdb = getDatabase(app);
+    window._fb = {
+        db: fbdb,
+        ref: (path) => ref(fbdb, path),
+        set, get, onValue, update, remove, push, onChildAdded
+    };
+    window._fbReady = true;
+    document.dispatchEvent(new Event('firebase-ready'));
+</script>
+
+<!-- ═══════════ 로그인 로직 ═══════════ -->
+<script>
+async function sha256(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function sanitizeId(id){
+  // Realtime DB 키에 못 쓰는 문자 제거 (. # $ [ ] /)
+  return id.replace(/[.#$\[\]/]/g,'');
+}
+function waitFirebase(){
+  return new Promise(res=>{
+    if(window._fbReady) return res();
+    document.addEventListener('firebase-ready', ()=>res(), {once:true});
+  });
+}
+
+const idInput = document.getElementById('idInput');
+const pwInput = document.getElementById('pwInput');
+const btnLogin = document.getElementById('btnLogin');
+const btnSignup = document.getElementById('btnSignup');
+const loginMsg = document.getElementById('loginMsg');
+
+function setMsg(text, busy){
+  loginMsg.textContent = text || '';
+  btnLogin.disabled = !!busy;
+  btnSignup.disabled = !!busy;
+}
+
+function validateInputs(){
+  const id = idInput.value.trim();
+  const pw = pwInput.value;
+  if(!id || !pw){ setMsg('아이디와 비밀번호를 입력해줘'); return null; }
+  const cleanId = sanitizeId(id);
+  if(cleanId !== id || id.length < 3){ setMsg('아이디는 3자 이상, 특수문자(. # $ [ ] /) 불가'); return null; }
+  if(pw.length < 4){ setMsg('비밀번호는 4자 이상'); return null; }
+  return {id, pw};
+}
+
+async function onSignup(){
+  const v = validateInputs();
+  if(!v) return;
+  setMsg('가입 중...', true);
+  await waitFirebase();
+  try{
+    const userRef = window._fb.ref('eraser3d_users/'+v.id);
+    const snap = await window._fb.get(userRef);
+    if(snap.exists()){ setMsg('이미 있는 아이디야'); setMsg('이미 있는 아이디야', false); return; }
+    const hash = await sha256(v.pw);
+    await window._fb.set(userRef, { password: hash, createdAt: Date.now() });
+    setMsg('가입 완료! 로그인 해줘', false);
+  }catch(err){
+    console.error(err);
+    setMsg('오류가 발생했어: '+err.message, false);
+  }
+}
+
+async function onLogin(){
+  const v = validateInputs();
+  if(!v) return;
+  setMsg('로그인 중...', true);
+  await waitFirebase();
+  try{
+    const userRef = window._fb.ref('eraser3d_users/'+v.id);
+    const snap = await window._fb.get(userRef);
+    if(!snap.exists()){ setMsg('없는 아이디야', false); return; }
+    const hash = await sha256(v.pw);
+    if(snap.val().password !== hash){ setMsg('비밀번호가 틀렸어', false); return; }
+    setMsg('로그인 성공!', true);
+    window.CURRENT_USER = v.id;
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('joystick').style.display = 'block';
+    document.getElementById('jumpBtn').style.display = 'flex';
+    if(window.startGame) window.startGame();
+  }catch(err){
+    console.error(err);
+    setMsg('오류가 발생했어: '+err.message, false);
+  }
+}
+
+btnLogin.addEventListener('click', onLogin);
+btnSignup.addEventListener('click', onSignup);
+pwInput.addEventListener('keydown', e=>{ if(e.key==='Enter') onLogin(); });
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script>
@@ -73,31 +224,37 @@ for(let i=0;i<15;i++){
 }
 
 // ===== 지우개 캐릭터 (귀여운 카툰풍) =====
+// 짜부된 느낌을 없애기 위해 세로(높이)를 늘리고, 두께도 살짝 키워 비율을 맞춤
 const player = new THREE.Group();
+
+const BODY_W = 1.0;   // 너비 (기존 1.2 → 살짝 줄임)
+const BODY_H = 1.5;   // 높이 (기존 0.9 → 대폭 늘림, 길쭉하게)
+const BODY_D = 0.65;  // 두께 (기존 0.6 → 살짝 늘림)
 
 // 몸통 (둥근 박스 느낌)
 const bodyMat = new THREE.MeshStandardMaterial({color:0xff6fa5});
-const body = new THREE.Mesh(new THREE.BoxGeometry(1.2,0.9,0.6), bodyMat);
-body.position.y = 0.7;
+const body = new THREE.Mesh(new THREE.BoxGeometry(BODY_W, BODY_H, BODY_D), bodyMat);
+body.position.y = BODY_H/2;
 body.castShadow = true;
 player.add(body);
 
-// 흰 띠 (지우개 특유의 종이 포장 느낌)
+// 흰 띠 (지우개 특유의 종이 포장 느낌) - 몸통 아래쪽 1/3 지점에 위치
 const band = new THREE.Mesh(
-  new THREE.BoxGeometry(1.25,0.35,0.65),
+  new THREE.BoxGeometry(BODY_W+0.05, BODY_H*0.28, BODY_D+0.05),
   new THREE.MeshStandardMaterial({color:0xffffff})
 );
-band.position.y = 0.7;
+band.position.y = BODY_H*0.32;
 player.add(band);
 
-// 눈
+// 눈 - 몸통이 길어진 만큼 위쪽으로 위치 조정
+const eyeY = BODY_H*0.78;
 function makeEye(x){
   const eye = new THREE.Mesh(new THREE.SphereGeometry(0.08,12,12), new THREE.MeshStandardMaterial({color:0x222222}));
-  eye.position.set(x, 0.85, 0.31);
+  eye.position.set(x, eyeY, BODY_D/2+0.01);
   return eye;
 }
-player.add(makeEye(-0.2));
-player.add(makeEye(0.2));
+player.add(makeEye(-0.18));
+player.add(makeEye(0.18));
 
 player.position.y = 0;
 player.castShadow = true;
@@ -151,7 +308,7 @@ addEventListener('keydown', e=>{if(e.code==='Space') jumpPressed=true;});
 
 // ===== 이동/물리 =====
 let velY = 0;
-const GRAVITY = -0.02;
+const GRAVITY = -0.011;
 const SPEED = 0.12;
 let grounded = true;
 let facing = 0;
@@ -172,11 +329,13 @@ function update(){
     player.position.x += mx*SPEED;
     player.position.z += mz*SPEED;
     facing = Math.atan2(mx, mz);
-    player.rotation.y += (facing - player.rotation.y)*0.2;
+    let da = facing - player.rotation.y;
+    da = Math.atan2(Math.sin(da), Math.cos(da)); // -PI~PI로 정규화 (반대편으로 홱 도는 것 방지)
+    player.rotation.y += da*0.08;
   }
 
   if(jumpPressed && grounded){
-    velY = 0.32;
+    velY = 0.24;
     grounded = false;
   }
   jumpPressed = false;
@@ -195,12 +354,17 @@ function update(){
   camera.lookAt(player.position.x, player.position.y+1, player.position.z);
 }
 
+let gameStarted = false;
 function animate(){
   requestAnimationFrame(animate);
+  if(!gameStarted) return;
   update();
   renderer.render(scene, camera);
 }
 animate();
+window.startGame = function(){
+  gameStarted = true;
+};
 
 addEventListener('resize', ()=>{
   camera.aspect = innerWidth/innerHeight;
