@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>지우개 3D</title>
+<style>
+  html,body{margin:0;padding:0;overflow:hidden;background:#87ceeb;touch-action:none;}
+  canvas{display:block;}
+  #joystick{
+    position:fixed;left:30px;bottom:30px;width:120px;height:120px;
+    border-radius:50%;background:rgba(255,255,255,0.25);border:2px solid rgba(255,255,255,0.5);
+    touch-action:none;z-index:10;
+  }
+  #stick{
+    position:absolute;left:35px;top:35px;width:50px;height:50px;border-radius:50%;
+    background:rgba(255,255,255,0.7);pointer-events:none;
+  }
+  #jumpBtn{
+    position:fixed;right:30px;bottom:30px;width:80px;height:80px;border-radius:50%;
+    background:rgba(255,180,60,0.8);border:2px solid rgba(255,255,255,0.6);
+    color:white;font-weight:bold;font-size:14px;display:flex;align-items:center;justify-content:center;
+    z-index:10;user-select:none;
+  }
+</style>
+</head>
+<body>
+<div id="joystick"><div id="stick"></div></div>
+<div id="jumpBtn">점프</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r160/three.min.js"></script>
+<script>
+// ===== 기본 씬 세팅 =====
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb);
+scene.fog = new THREE.Fog(0x87ceeb, 20, 80);
+
+const camera = new THREE.PerspectiveCamera(65, innerWidth/innerHeight, 0.1, 500);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+
+// ===== 조명 =====
+const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+sun.position.set(20,30,10);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048,2048);
+sun.shadow.camera.left=-40; sun.shadow.camera.right=40;
+sun.shadow.camera.top=40; sun.shadow.camera.bottom=-40;
+scene.add(sun);
+scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+
+// ===== 바닥 =====
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(200,200),
+  new THREE.MeshStandardMaterial({color:0x7ec850})
+);
+ground.rotation.x = -Math.PI/2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// 참고용 박스들 (맵 오브젝트 자리)
+for(let i=0;i<15;i++){
+  const box = new THREE.Mesh(
+    new THREE.BoxGeometry(2,2,2),
+    new THREE.MeshStandardMaterial({color:0xffffff})
+  );
+  box.position.set((Math.random()-0.5)*60, 1, (Math.random()-0.5)*60);
+  box.castShadow = true; box.receiveShadow = true;
+  scene.add(box);
+}
+
+// ===== 지우개 캐릭터 (귀여운 카툰풍) =====
+const player = new THREE.Group();
+
+// 몸통 (둥근 박스 느낌)
+const bodyMat = new THREE.MeshStandardMaterial({color:0xff6fa5});
+const body = new THREE.Mesh(new THREE.BoxGeometry(1.2,0.9,0.6), bodyMat);
+body.position.y = 0.7;
+body.castShadow = true;
+player.add(body);
+
+// 흰 띠 (지우개 특유의 종이 포장 느낌)
+const band = new THREE.Mesh(
+  new THREE.BoxGeometry(1.25,0.35,0.65),
+  new THREE.MeshStandardMaterial({color:0xffffff})
+);
+band.position.y = 0.7;
+player.add(band);
+
+// 눈
+function makeEye(x){
+  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.08,12,12), new THREE.MeshStandardMaterial({color:0x222222}));
+  eye.position.set(x, 0.85, 0.31);
+  return eye;
+}
+player.add(makeEye(-0.2));
+player.add(makeEye(0.2));
+
+player.position.y = 0;
+player.castShadow = true;
+scene.add(player);
+
+// ===== 입력 =====
+const keys = {};
+addEventListener('keydown', e=>keys[e.key.toLowerCase()]=true);
+addEventListener('keyup', e=>keys[e.key.toLowerCase()]=false);
+
+// 조이스틱
+let joyVec = {x:0,y:0};
+const joystick = document.getElementById('joystick');
+const stick = document.getElementById('stick');
+let joyActive=false, joyTouchId=null, joyCenter={x:0,y:0};
+
+joystick.addEventListener('touchstart', e=>{
+  const t = e.changedTouches[0];
+  joyTouchId = t.identifier;
+  const rect = joystick.getBoundingClientRect();
+  joyCenter = {x:rect.left+rect.width/2, y:rect.top+rect.height/2};
+  joyActive = true;
+});
+addEventListener('touchmove', e=>{
+  for(const t of e.changedTouches){
+    if(t.identifier===joyTouchId){
+      let dx=t.clientX-joyCenter.x, dy=t.clientY-joyCenter.y;
+      const max=40;
+      const len=Math.hypot(dx,dy);
+      if(len>max){dx=dx/len*max; dy=dy/len*max;}
+      stick.style.left = (35+dx)+'px';
+      stick.style.top = (35+dy)+'px';
+      joyVec = {x:dx/max, y:dy/max};
+    }
+  }
+});
+addEventListener('touchend', e=>{
+  for(const t of e.changedTouches){
+    if(t.identifier===joyTouchId){
+      joyActive=false; joyVec={x:0,y:0};
+      stick.style.left='35px'; stick.style.top='35px';
+    }
+  }
+});
+
+// 점프 버튼
+let jumpPressed=false;
+const jumpBtn = document.getElementById('jumpBtn');
+jumpBtn.addEventListener('touchstart', e=>{e.preventDefault(); jumpPressed=true;});
+addEventListener('keydown', e=>{if(e.code==='Space') jumpPressed=true;});
+
+// ===== 이동/물리 =====
+let velY = 0;
+const GRAVITY = -0.02;
+const SPEED = 0.12;
+let grounded = true;
+let facing = 0; // y축 회전
+
+function update(){
+  let mx=0, mz=0;
+  if(keys['w']||keys['arrowup']) mz -= 1;
+  if(keys['s']||keys['arrowdown']) mz += 1;
+  if(keys['a']||keys['arrowleft']) mx -= 1;
+  if(keys['d']||keys['arrowright']) mx += 1;
+
+  mx += joyVec.x;
+  mz += joyVec.y;
+
+  const len = Math.hypot(mx,mz);
+  if(len>0.05){
+    mx/=len; mz/=len;
+    player.position.x += mx*SPEED;
+    player.position.z += mz*SPEED;
+    facing = Math.atan2(mx, mz);
+    player.rotation.y += (facing - player.rotation.y)*0.2;
+  }
+
+  if(jumpPressed && grounded){
+    velY = 0.32;
+    grounded = false;
+  }
+  jumpPressed = false;
+
+  velY += GRAVITY;
+  player.position.y += velY;
+  if(player.position.y <= 0){
+    player.position.y = 0;
+    velY = 0;
+    grounded = true;
+  }
+
+  // 카메라: 3인칭 추적
+  const camOffset = new THREE.Vector3(0, 4.5, 7);
+  const targetCamPos = player.position.clone().add(camOffset);
+  camera.position.lerp(targetCamPos, 0.1);
+  camera.lookAt(player.position.x, player.position.y+1, player.position.z);
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  update();
+  renderer.render(scene, camera);
+}
+animate();
+
+addEventListener('resize', ()=>{
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>
