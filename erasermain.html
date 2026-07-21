@@ -49,6 +49,56 @@
   #btnSignup{background:#fff;color:#ff6fa5;border:2px solid #ff6fa5 !important;margin-top:8px;}
   #loginMsg{min-height:18px;font-size:12px;color:#e0446b;margin-top:8px;}
   #loginLoading{font-size:12px;color:#999;margin-top:8px;}
+
+  /* ═══ 홈 메뉴 (캐릭터 위주) ═══ */
+  #homeScreen{
+    position:fixed;inset:0;z-index:90;display:none;
+    background:radial-gradient(ellipse at 50% 30%, #fff2f8 0%, #ffd3e6 45%, #ffb6d9 100%);
+    font-family:'Segoe UI',sans-serif;
+  }
+  #homeTopBar{
+    position:absolute;top:16px;left:16px;right:16px;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  #homeUserBadge{
+    display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.85);
+    border-radius:30px;padding:8px 16px 8px 8px;box-shadow:0 4px 12px rgba(0,0,0,0.12);
+  }
+  #homeUserBadge .avatar{
+    width:34px;height:34px;border-radius:50%;background:#ff6fa5;
+    display:flex;align-items:center;justify-content:center;font-size:18px;
+  }
+  #homeUserBadge .uname{font-weight:bold;font-size:14px;color:#444;}
+  #homeSettingsBtn{
+    width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.85);
+    display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;
+    box-shadow:0 4px 12px rgba(0,0,0,0.12);
+  }
+  #charViewport{
+    position:absolute;top:0;left:0;right:0;bottom:150px;
+  }
+  #charViewport canvas{width:100%;height:100%;}
+  #homeCharName{
+    position:absolute;left:0;right:0;bottom:170px;text-align:center;
+    font-size:13px;color:#a5497a;font-weight:bold;letter-spacing:2px;
+  }
+  #homeNav{
+    position:absolute;left:0;right:0;bottom:0;padding:14px 16px 22px;
+    display:flex;gap:10px;justify-content:center;flex-wrap:wrap;
+    background:linear-gradient(to top, rgba(255,255,255,0.9), rgba(255,255,255,0));
+  }
+  .navBtn{
+    width:78px;height:86px;border-radius:16px;border:none;cursor:pointer;
+    background:#fff;box-shadow:0 6px 14px rgba(0,0,0,0.15);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    font-size:12px;font-weight:bold;color:#555;position:relative;
+  }
+  .navBtn .ic{font-size:26px;}
+  .navBtn.primary{background:#ff6fa5;color:#fff;}
+  .navBtn .lock{
+    position:absolute;top:6px;right:6px;background:#999;color:#fff;
+    font-size:9px;padding:2px 5px;border-radius:8px;
+  }
 </style>
 </head>
 <body>
@@ -66,6 +116,24 @@
 
 <div id="joystick"><div id="stick"></div></div>
 <div id="jumpBtn">점프</div>
+
+<div id="homeScreen">
+  <div id="homeTopBar">
+    <div id="homeUserBadge">
+      <div class="avatar">🧽</div>
+      <div class="uname" id="homeUserName">-</div>
+    </div>
+    <div id="homeSettingsBtn">⚙️</div>
+  </div>
+  <div id="charViewport"></div>
+  <div id="homeCharName">내 지우개</div>
+  <div id="homeNav">
+    <button class="navBtn primary" id="navExplore"><span class="ic">🗺️</span>탐험</button>
+    <button class="navBtn" id="navMini"><span class="ic">🎮</span>미니게임<span class="lock">준비중</span></button>
+    <button class="navBtn" id="navBattle"><span class="ic">⚔️</span>전투<span class="lock">준비중</span></button>
+    <button class="navBtn" id="navRace"><span class="ic">🏁</span>레이싱<span class="lock">준비중</span></button>
+  </div>
+</div>
 
 <!-- ═══════════ FIREBASE SDK ═══════════ -->
 <script type="module">
@@ -165,9 +233,8 @@ async function onLogin(){
     setMsg('로그인 성공!', true);
     window.CURRENT_USER = v.id;
     document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('joystick').style.display = 'block';
-    document.getElementById('jumpBtn').style.display = 'flex';
-    if(window.startGame) window.startGame();
+    if(window.setPlayerName) window.setPlayerName(v.id);
+    if(window.showHomeScreen) window.showHomeScreen(v.id);
   }catch(err){
     console.error(err);
     setMsg('오류가 발생했어: '+err.message, false);
@@ -225,40 +292,83 @@ for(let i=0;i<15;i++){
 
 // ===== 지우개 캐릭터 (귀여운 카툰풍) =====
 // 짜부된 느낌을 없애기 위해 세로(높이)를 늘리고, 두께도 살짝 키워 비율을 맞춤
-const player = new THREE.Group();
-
 const BODY_W = 1.0;   // 너비 (기존 1.2 → 살짝 줄임)
 const BODY_H = 1.5;   // 높이 (기존 0.9 → 대폭 늘림, 길쭉하게)
 const BODY_D = 0.65;  // 두께 (기존 0.6 → 살짝 늘림)
 
-// 몸통 (둥근 박스 느낌)
-const bodyMat = new THREE.MeshStandardMaterial({color:0xff6fa5});
-const body = new THREE.Mesh(new THREE.BoxGeometry(BODY_W, BODY_H, BODY_D), bodyMat);
-body.position.y = BODY_H/2;
-body.castShadow = true;
-player.add(body);
+// 지우개 모델 생성 함수 (메인 월드 캐릭터 / 홈 화면 미리보기 둘 다 재사용)
+function buildEraserModel(){
+  const group = new THREE.Group();
 
-// 흰 띠 (지우개 특유의 종이 포장 느낌) - 몸통 아래쪽 1/3 지점에 위치
-const band = new THREE.Mesh(
-  new THREE.BoxGeometry(BODY_W+0.05, BODY_H*0.28, BODY_D+0.05),
-  new THREE.MeshStandardMaterial({color:0xffffff})
-);
-band.position.y = BODY_H*0.32;
-player.add(band);
+  const bodyMat = new THREE.MeshStandardMaterial({color:0xff6fa5});
+  const body = new THREE.Mesh(new THREE.BoxGeometry(BODY_W, BODY_H, BODY_D), bodyMat);
+  body.position.y = BODY_H/2;
+  body.castShadow = true;
+  group.add(body);
 
-// 눈 - 몸통이 길어진 만큼 위쪽으로 위치 조정
-const eyeY = BODY_H*0.78;
-function makeEye(x){
-  const eye = new THREE.Mesh(new THREE.SphereGeometry(0.08,12,12), new THREE.MeshStandardMaterial({color:0x222222}));
-  eye.position.set(x, eyeY, BODY_D/2+0.01);
-  return eye;
+  const band = new THREE.Mesh(
+    new THREE.BoxGeometry(BODY_W+0.05, BODY_H*0.28, BODY_D+0.05),
+    new THREE.MeshStandardMaterial({color:0xffffff})
+  );
+  band.position.y = BODY_H*0.32;
+  group.add(band);
+
+  const eyeY = BODY_H*0.78;
+  function makeEye(x){
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.08,12,12), new THREE.MeshStandardMaterial({color:0x222222}));
+    eye.position.set(x, eyeY, BODY_D/2+0.01);
+    return eye;
+  }
+  group.add(makeEye(-0.18));
+  group.add(makeEye(0.18));
+
+  return group;
 }
-player.add(makeEye(-0.18));
-player.add(makeEye(0.18));
 
+const player = buildEraserModel();
 player.position.y = 0;
 player.castShadow = true;
 scene.add(player);
+
+// ===== 닉네임 표시 (머리 위 텍스트) =====
+let nameSprite = null;
+function setPlayerName(text){
+  if(nameSprite){ player.remove(nameSprite); nameSprite.material.map.dispose(); nameSprite.material.dispose(); }
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 256; canvas.height = 64;
+  ctx.font = 'bold 34px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const w = ctx.measureText(text).width;
+  // 배경 (반투명 알약 모양)
+  ctx.fillStyle = 'rgba(0,0,0,0.45)';
+  const padX = 20;
+  roundRect(ctx, 128-w/2-padX, 12, w+padX*2, 40, 20);
+  ctx.fill();
+  // 텍스트
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(text, 128, 33);
+
+  function roundRect(c, x, y, w, h, r){
+    c.beginPath();
+    c.moveTo(x+r, y);
+    c.arcTo(x+w, y, x+w, y+h, r);
+    c.arcTo(x+w, y+h, x, y+h, r);
+    c.arcTo(x, y+h, x, y, r);
+    c.arcTo(x, y, x+w, y, r);
+    c.closePath();
+  }
+
+  const tex = new THREE.CanvasTexture(canvas);
+  const mat = new THREE.SpriteMaterial({map:tex, depthTest:false, transparent:true});
+  nameSprite = new THREE.Sprite(mat);
+  nameSprite.scale.set(1.6, 0.4, 1);
+  nameSprite.position.set(0, BODY_H+0.5, 0);
+  nameSprite.renderOrder = 999;
+  player.add(nameSprite);
+}
+window.setPlayerName = setPlayerName;
 
 // ===== 입력 =====
 const keys = {};
@@ -365,6 +475,96 @@ animate();
 window.startGame = function(){
   gameStarted = true;
 };
+
+// ===== 홈 화면: 캐릭터 미리보기 씬 =====
+let previewInited = false;
+function initPreview(){
+  if(previewInited) return;
+  previewInited = true;
+
+  const vpEl = document.getElementById('charViewport');
+  const pScene = new THREE.Scene();
+  const pCamera = new THREE.PerspectiveCamera(45, vpEl.clientWidth/vpEl.clientHeight, 0.1, 50);
+  pCamera.position.set(0, 1.6, 4.2);
+  pCamera.lookAt(0, 0.9, 0);
+
+  const pRenderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+  pRenderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  pRenderer.setSize(vpEl.clientWidth, vpEl.clientHeight);
+  vpEl.appendChild(pRenderer.domElement);
+
+  pScene.add(new THREE.AmbientLight(0xffffff, 0.9));
+  const pSun = new THREE.DirectionalLight(0xffffff, 1.2);
+  pSun.position.set(3,5,4);
+  pScene.add(pSun);
+
+  // 바닥 원판 그림자 느낌
+  const disc = new THREE.Mesh(
+    new THREE.CircleGeometry(1.3, 32),
+    new THREE.MeshBasicMaterial({color:0xff9dc4, transparent:true, opacity:0.35})
+  );
+  disc.rotation.x = -Math.PI/2;
+  disc.position.y = 0.01;
+  pScene.add(disc);
+
+  const previewModel = buildEraserModel();
+  pScene.add(previewModel);
+
+  function resizePreview(){
+    const w = vpEl.clientWidth, h = vpEl.clientHeight;
+    pCamera.aspect = w/h;
+    pCamera.updateProjectionMatrix();
+    pRenderer.setSize(w,h);
+  }
+  addEventListener('resize', resizePreview);
+
+  let t = 0;
+  function previewLoop(){
+    requestAnimationFrame(previewLoop);
+    t += 0.01;
+    previewModel.rotation.y += 0.012;
+    previewModel.position.y = Math.sin(t*1.6)*0.06; // 살짝 둥실둥실
+    pRenderer.render(pScene, pCamera);
+  }
+  previewLoop();
+}
+
+// ===== 홈 화면 표시/네비게이션 =====
+function showHomeScreen(username){
+  document.getElementById('homeUserName').textContent = username;
+  document.getElementById('homeCharName').textContent = username+'의 지우개';
+  document.getElementById('homeScreen').style.display = 'block';
+  initPreview();
+}
+
+function toast(msg){
+  let el = document.getElementById('homeToast');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'homeToast';
+    el.style.cssText = 'position:fixed;left:50%;top:20px;transform:translateX(-50%);'
+      +'background:rgba(0,0,0,0.75);color:#fff;padding:10px 18px;border-radius:20px;'
+      +'font-size:13px;z-index:200;transition:opacity 0.3s;';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>{ el.style.opacity = '0'; }, 1500);
+}
+
+document.getElementById('navExplore').addEventListener('click', ()=>{
+  document.getElementById('homeScreen').style.display = 'none';
+  document.getElementById('joystick').style.display = 'block';
+  document.getElementById('jumpBtn').style.display = 'flex';
+  window.startGame();
+});
+document.getElementById('navMini').addEventListener('click', ()=>toast('미니게임은 준비 중이야!'));
+document.getElementById('navBattle').addEventListener('click', ()=>toast('전투는 준비 중이야!'));
+document.getElementById('navRace').addEventListener('click', ()=>toast('레이싱은 준비 중이야!'));
+document.getElementById('homeSettingsBtn').addEventListener('click', ()=>toast('설정은 준비 중이야!'));
+
+window.showHomeScreen = showHomeScreen;
 
 addEventListener('resize', ()=>{
   camera.aspect = innerWidth/innerHeight;
