@@ -23,6 +23,12 @@
     z-index:10;user-select:none;
   }
   #joystick, #jumpBtn{ display:none; }
+  #gameCoinHud{
+    display:none;position:fixed;top:16px;left:16px;z-index:15;
+    background:rgba(255,255,255,0.85);border-radius:20px;padding:8px 16px;
+    font-family:'Segoe UI',sans-serif;font-size:14px;font-weight:bold;color:#a5497a;
+    box-shadow:0 4px 12px rgba(0,0,0,0.12);
+  }
 
   #loginScreen{
     position:fixed;inset:0;z-index:100;
@@ -99,6 +105,113 @@
     position:absolute;top:6px;right:6px;background:#999;color:#fff;
     font-size:9px;padding:2px 5px;border-radius:8px;
   }
+  #homeCoinBadge{
+    display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.85);
+    border-radius:20px;padding:7px 14px;font-size:13px;font-weight:bold;color:#a5497a;
+    box-shadow:0 4px 12px rgba(0,0,0,0.12);
+  }
+
+  /* ═══ 가챠 / 도감 모달 ═══ */
+  .modalOverlay{
+    position:fixed;inset:0;z-index:95;display:none;
+    background:rgba(0,0,0,0.45);align-items:center;justify-content:center;
+  }
+  .modalCard{
+    width:300px;max-height:80vh;overflow-y:auto;background:#fff;border-radius:20px;
+    padding:20px;text-align:center;font-family:'Segoe UI',sans-serif;
+  }
+  .modalCard h2{margin:0 0 4px;color:#ff6fa5;font-size:20px;}
+  .modalCard .modalCoin{font-size:13px;color:#a5497a;margin-bottom:14px;font-weight:bold;}
+  #gachaPullBtn{
+    width:100%;padding:14px;border:none;border-radius:12px;background:#ff6fa5;color:#fff;
+    font-size:15px;font-weight:bold;cursor:pointer;margin-bottom:10px;
+  }
+  #gachaPullBtn:disabled{background:#ccc;cursor:not-allowed;}
+  #gachaResult{
+    min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:#fff6fa;border-radius:14px;margin-bottom:12px;padding:14px;
+  }
+  #gachaResult .swatch{width:54px;height:54px;border-radius:14px;margin-bottom:8px;box-shadow:0 4px 10px rgba(0,0,0,0.15);}
+  #gachaResult .rname{font-weight:bold;font-size:14px;color:#444;}
+  #gachaResult .rrarity{font-size:11px;color:#999;margin-top:2px;}
+  .modalCloseBtn{
+    width:100%;padding:11px;border:none;border-radius:12px;background:#f2f2f2;color:#555;
+    font-size:13px;font-weight:bold;cursor:pointer;
+  }
+  #collectionGrid{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;
+  }
+  .skinCard{
+    border-radius:12px;padding:10px 4px;background:#fafafa;border:2px solid transparent;cursor:pointer;
+  }
+  .skinCard .swatch{width:36px;height:36px;border-radius:10px;margin:0 auto 6px;}
+  .skinCard .sname{font-size:10px;color:#555;font-weight:bold;}
+  .skinCard.locked{opacity:0.35;cursor:default;}
+  .skinCard.equipped{background:#fff0f6;box-shadow:0 0 0 2px #ff6fa5 inset;}
+  #collectionTabs{
+    display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px;
+  }
+  .rarityTab{
+    flex:0 0 auto;padding:6px 12px;border-radius:14px;border:none;cursor:pointer;
+    font-size:11px;font-weight:bold;background:#f2f2f2;color:#888;white-space:nowrap;
+  }
+  .rarityTab.active{background:#ff6fa5;color:#fff;}
+
+  #probTable{
+    display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;justify-content:center;
+  }
+  .probItem{
+    width:30%;background:#faf7f9;border-radius:10px;padding:7px 2px;text-align:center;
+  }
+  .probItem .pname{font-size:10px;font-weight:bold;color:#555;}
+  .probItem .ppct{font-size:12px;font-weight:bold;color:#a5497a;margin-top:3px;}
+
+  /* ═══ 로그인 환영 애니메이션 ═══ */
+  #welcomeOverlay{
+    position:fixed;inset:0;z-index:99;display:none;
+    background:radial-gradient(ellipse at 50% 40%, #fff2f8 0%, #ffb6d9 100%);
+    align-items:center;justify-content:center;flex-direction:column;
+    font-family:'Segoe UI',sans-serif;
+  }
+  #welcomeOverlay .weraser{
+    font-size:64px;animation:weraserBounce 0.9s ease-in-out infinite;
+  }
+  #welcomeOverlay .wtext{
+    margin-top:14px;font-size:18px;font-weight:bold;color:#a5497a;
+    opacity:0;animation:wtextFade 0.5s ease-out 0.3s forwards;
+  }
+  @keyframes weraserBounce{
+    0%,100%{transform:translateY(0) scale(1,1);}
+    45%{transform:translateY(-22px) scale(0.96,1.04);}
+    55%{transform:translateY(-22px) scale(0.96,1.04);}
+    75%{transform:translateY(0) scale(1.06,0.94);}
+  }
+  @keyframes wtextFade{
+    from{opacity:0;transform:translateY(6px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+
+  /* ═══ 가챠 스탬프(틀 찍기) 컷씬 ═══ */
+  #stampStage{
+    position:relative;width:100%;height:78px;display:flex;align-items:flex-end;justify-content:center;
+    margin-bottom:6px;
+  }
+  #doughBlob{
+    width:48px;height:40px;background:#e3d3b8;border-radius:50% 50% 46% 46%/60% 60% 40% 40%;
+    transition:all 0.35s ease;
+  }
+  #doughBlob.squash{ transform:scaleY(0.55); border-radius:50% 50% 30% 30%/70% 70% 30% 30%; }
+  #doughBlob.stamped{ width:46px;height:34px;border-radius:8px; transform:scaleY(1); }
+  #moldBlock{
+    position:absolute;top:-46px;left:50%;transform:translate(-50%,0);
+    width:56px;height:32px;background:#8a8a8a;border-radius:6px;
+    box-shadow:0 4px 8px rgba(0,0,0,0.25);
+    transition:top 0.35s ease;
+  }
+  #moldBlock.down{ top:6px; }
+  #gachaResult.revealed .rname, #gachaResult.revealed .rrarity{
+    opacity:0;animation:wtextFade 0.4s ease-out forwards;
+  }
 </style>
 </head>
 <body>
@@ -115,7 +228,13 @@
 </div>
 
 <div id="joystick"><div id="stick"></div></div>
+<div id="gameCoinHud">🪙 <span id="gameCoinAmount">0</span></div>
 <div id="jumpBtn">점프</div>
+
+<div id="welcomeOverlay">
+  <div class="weraser">🧽</div>
+  <div class="wtext" id="welcomeText">어서와!</div>
+</div>
 
 <div id="homeScreen">
   <div id="homeTopBar">
@@ -125,13 +244,43 @@
     </div>
     <div id="homeSettingsBtn">⚙️</div>
   </div>
+  <div id="homeCoinBadge" style="position:absolute;top:64px;left:16px;">🪙 <span id="coinAmount">0</span></div>
   <div id="charViewport"></div>
   <div id="homeCharName">내 지우개</div>
   <div id="homeNav">
     <button class="navBtn primary" id="navExplore"><span class="ic">🗺️</span>탐험</button>
+    <button class="navBtn primary" id="navGacha"><span class="ic">🎁</span>가챠</button>
+    <button class="navBtn" id="navCollection"><span class="ic">📖</span>도감</button>
     <button class="navBtn" id="navMini"><span class="ic">🎮</span>미니게임<span class="lock">준비중</span></button>
     <button class="navBtn" id="navBattle"><span class="ic">⚔️</span>전투<span class="lock">준비중</span></button>
     <button class="navBtn" id="navRace"><span class="ic">🏁</span>레이싱<span class="lock">준비중</span></button>
+  </div>
+</div>
+
+<div class="modalOverlay" id="gachaOverlay">
+  <div class="modalCard">
+    <h2>🎁 지우개 가챠</h2>
+    <div class="modalCoin">보유 코인: 🪙 <span id="gachaCoinAmount">0</span></div>
+    <div id="gachaResult">
+      <div id="stampStage">
+        <div id="doughBlob"></div>
+        <div id="moldBlock"></div>
+      </div>
+      <div class="rname" style="color:#bbb;">뽑기를 눌러봐!</div>
+    </div>
+    <button id="gachaPullBtn">뽑기 (100 🪙)</button>
+    <div id="probTable"></div>
+    <button class="modalCloseBtn" id="gachaCloseBtn">닫기</button>
+  </div>
+</div>
+
+<div class="modalOverlay" id="collectionOverlay">
+  <div class="modalCard">
+    <h2>📖 지우개 도감</h2>
+    <div class="modalCoin" id="collectionCount">0 / 0 수집</div>
+    <div id="collectionTabs"></div>
+    <div id="collectionGrid"></div>
+    <button class="modalCloseBtn" id="collectionCloseBtn">닫기</button>
   </div>
 </div>
 
@@ -234,11 +383,21 @@ async function onLogin(){
     window.CURRENT_USER = v.id;
     document.getElementById('loginScreen').style.display = 'none';
     if(window.setPlayerName) window.setPlayerName(v.id);
-    if(window.showHomeScreen) window.showHomeScreen(v.id);
+    showWelcomeThenHome(v.id);
   }catch(err){
     console.error(err);
     setMsg('오류가 발생했어: '+err.message, false);
   }
+}
+
+function showWelcomeThenHome(username){
+  const overlay = document.getElementById('welcomeOverlay');
+  document.getElementById('welcomeText').textContent = username+', 어서와!';
+  overlay.style.display = 'flex';
+  setTimeout(()=>{
+    overlay.style.display = 'none';
+    if(window.showHomeScreen) window.showHomeScreen(username);
+  }, 1600);
 }
 
 btnLogin.addEventListener('click', onLogin);
@@ -290,6 +449,50 @@ for(let i=0;i<15;i++){
   scene.add(box);
 }
 
+// ===== 맵에 흩어진 코인 (탐험 중 획득) =====
+const worldCoins = [];
+const coinGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.08, 20);
+function spawnWorldCoins(count){
+  for(let i=0;i<count;i++){
+    const big = Math.random() < 0.15; // 15% 확률로 큰 코인
+    const mat = new THREE.MeshStandardMaterial({color: big?0xffd76f:0xffe27a, metalness:0.4, roughness:0.3});
+    const coin = new THREE.Mesh(coinGeo, mat);
+    coin.scale.setScalar(big?1.6:1);
+    coin.rotation.x = Math.PI/2;
+    coin.position.set((Math.random()-0.5)*70, 0.4, (Math.random()-0.5)*70);
+    coin.castShadow = true;
+    coin.userData.value = big?30:10;
+    scene.add(coin);
+    worldCoins.push(coin);
+  }
+}
+spawnWorldCoins(25);
+
+let coinsSaveTimer = null;
+function collectWorldCoin(coin){
+  scene.remove(coin);
+  worldCoins.splice(worldCoins.indexOf(coin),1);
+  userCoins += coin.userData.value;
+  updateCoinUI();
+  showCoinPopup('+'+coin.userData.value+' 🪙');
+  clearTimeout(coinsSaveTimer);
+  coinsSaveTimer = setTimeout(()=>{ saveUserGachaData(); }, 800); // 연속 습득 시 저장 묶어서 한번에
+}
+
+function showCoinPopup(text){
+  const el = document.createElement('div');
+  el.textContent = text;
+  el.style.cssText = 'position:fixed;left:50%;top:80px;transform:translateX(-50%);'
+    +'color:#a5497a;font-weight:bold;font-size:16px;z-index:50;pointer-events:none;'
+    +'text-shadow:0 1px 2px #fff;transition:all 0.6s ease-out;';
+  document.body.appendChild(el);
+  requestAnimationFrame(()=>{
+    el.style.top = '50px';
+    el.style.opacity = '0';
+  });
+  setTimeout(()=>el.remove(), 650);
+}
+
 // ===== 지우개 캐릭터 (귀여운 카툰풍) =====
 // 짜부된 느낌을 없애기 위해 세로(높이)를 늘리고, 두께도 살짝 키워 비율을 맞춤
 const BODY_W = 1.0;   // 너비 (기존 1.2 → 살짝 줄임)
@@ -322,6 +525,7 @@ function buildEraserModel(){
   group.add(makeEye(-0.18));
   group.add(makeEye(0.18));
 
+  group.userData.bodyMat = bodyMat;
   return group;
 }
 
@@ -329,6 +533,295 @@ const player = buildEraserModel();
 player.position.y = 0;
 player.castShadow = true;
 scene.add(player);
+const previewModels = []; // 홈 화면 미리보기 인스턴스들 (스킨 변경 시 같이 갱신)
+
+// ===== 등급 체계 (16단계, 낮은 등급 → 높은 등급) =====
+const RARITY_ORDER = ['Common','Uncommon','Rare','Epic','Super Epic','Mythic','Legendary','Beast','Celestial','Ultra','Hyper','Infinity','Primordial','???','Color','Non-eraser'];
+
+const RARITY_AURA = {
+  'Common':     null,
+  'Uncommon':   null,
+  'Rare':       {color:0x4fc3f7, rings:1, particles:4,  rotSpeed:0.010},
+  'Epic':       {color:0xff6fa5, rings:1, particles:6,  rotSpeed:0.012},
+  'Super Epic': {color:0x9b59b6, rings:2, particles:8,  rotSpeed:0.014},
+  'Mythic':     {color:0xe74c3c, rings:2, particles:9,  rotSpeed:0.016},
+  'Legendary':  {color:0xff9800, rings:2, particles:10, rotSpeed:0.018},
+  'Beast':      {color:0x2f6fed, rings:2, particles:11, rotSpeed:0.020},
+  'Celestial':  {color:0xffd700, rings:3, particles:12, rotSpeed:0.022},
+  'Ultra':      {color:0x1abc9c, rings:3, particles:13, rotSpeed:0.024},
+  'Hyper':      {color:0xff9fd6, color2:0x4fc3f7, rings:3, particles:14, rotSpeed:0.026, twoTone:true},
+  'Infinity':   {color:0xbdbdbd, rings:3, particles:15, rotSpeed:0.028},
+  'Primordial': {color:0x7a0000, rings:4, particles:16, rotSpeed:0.030},
+  '???':        {color:0x1a1a1a, rings:4, particles:16, rotSpeed:0.020},
+  'Color':      {color:0xff5fd0, rings:4, particles:18, rotSpeed:0.032, rainbow:true},
+  'Non-eraser': {color:0xffffff, rings:4, particles:20, rotSpeed:0.034, rainbow:true},
+};
+
+function buildAura(rarity){
+  const cfg = RARITY_AURA[rarity];
+  if(!cfg) return null;
+  const g = new THREE.Group();
+  g.userData.rainbow = !!cfg.rainbow;
+  g.userData.mats = [];
+
+  for(let i=0;i<cfg.rings;i++){
+    const c = (cfg.twoTone && i%2===1) ? cfg.color2 : cfg.color;
+    const ringMat = new THREE.MeshBasicMaterial({color:c, transparent:true, opacity:0.55-i*0.1, side:THREE.DoubleSide});
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.85+i*0.2, 0.03, 8, 40), ringMat);
+    ring.rotation.x = Math.PI/2;
+    ring.position.y = 0.06;
+    ring.userData.spin = (i%2===0?1:-1)*cfg.rotSpeed;
+    g.add(ring);
+    g.userData.mats.push(ringMat);
+  }
+
+  const orbit = new THREE.Group();
+  orbit.userData.isOrbit = true;
+  for(let i=0;i<cfg.particles;i++){
+    const c = (cfg.twoTone && i%2===1) ? cfg.color2 : cfg.color;
+    const pm = new THREE.MeshBasicMaterial({color:c});
+    const p = new THREE.Mesh(new THREE.SphereGeometry(0.05,8,8), pm);
+    const ang = (i/cfg.particles)*Math.PI*2;
+    const r = 0.9 + (i%2)*0.15;
+    p.position.set(Math.cos(ang)*r, 0.3+Math.sin(i*1.7)*0.25, Math.sin(ang)*r);
+    orbit.add(p);
+    g.userData.mats.push(pm);
+  }
+  g.add(orbit);
+  return g;
+}
+
+function setAura(charGroup, rarity){
+  if(charGroup.userData.auraGroup){
+    charGroup.remove(charGroup.userData.auraGroup);
+  }
+  const aura = buildAura(rarity);
+  charGroup.userData.auraGroup = aura;
+  if(aura) charGroup.add(aura);
+}
+
+function updateAura(g){
+  if(!g) return;
+  g.children.forEach(c=>{
+    if(c.userData.isOrbit) c.rotation.y += 0.02;
+    else if(c.userData.spin) c.rotation.z += c.userData.spin;
+  });
+  if(g.userData.rainbow){
+    const hue = (performance.now()/20)%360;
+    g.userData.mats.forEach(m=>m.color.setHSL(hue/360,0.9,0.6));
+  }
+}
+
+// ===== 스킨(색상+아우라) 적용 =====
+function applyBodyMat(mat, skin){
+  mat.color.setHex(skin.color);
+  mat.transparent = !!skin.transparent;
+  mat.opacity = skin.transparent ? 0.25 : 1;
+  mat.needsUpdate = true;
+}
+
+function applySkin(skin){
+  applyBodyMat(player.userData.bodyMat, skin);
+  setAura(player, skin.rarity);
+  previewModels.forEach(m=>{
+    applyBodyMat(m.userData.bodyMat, skin);
+    setAura(m, skin.rarity);
+  });
+}
+window.applySkin = applySkin;
+
+// ===== 가챠 / 수집 시스템 =====
+// 등급 16단계, 확률: Common 35 · Uncommon 20 · Rare 15 · Epic 10 · Super Epic 7 · Mythic 5
+// · Legendary 3 · Beast 2 · Celestial 1.2 · Ultra 0.8 · Hyper 0.5 · Infinity 0.3
+// · Primordial 0.15 · ??? 0.03 · Color 0.015 · Non-eraser 0.005
+const SKIN_POOL = [
+  {id:'default',    name:'Common',      color:0xa8e063, rarity:'Common',      weight:35},
+  {id:'uncommon',   name:'Uncommon',    color:0x4caf50, rarity:'Uncommon',    weight:20},
+  {id:'rare',       name:'Rare',        color:0x4fc3f7, rarity:'Rare',        weight:15},
+  {id:'epic',       name:'Epic',        color:0xff6fa5, rarity:'Epic',        weight:10},
+  {id:'superepic',  name:'Super Epic',  color:0x9b59b6, rarity:'Super Epic',  weight:7},
+  {id:'mythic',     name:'Mythic',      color:0xe74c3c, rarity:'Mythic',      weight:5},
+  {id:'legendary',  name:'Legendary',   color:0xff9800, rarity:'Legendary',   weight:3},
+  {id:'beast',      name:'Beast',       color:0x2f6fed, rarity:'Beast',       weight:2},
+  {id:'celestial',  name:'Celestial',   color:0xffd700, rarity:'Celestial',   weight:1.2},
+  {id:'ultra',      name:'Ultra',       color:0x1abc9c, rarity:'Ultra',       weight:0.8},
+  {id:'hyper',      name:'Hyper',       color:0xff9fd6, rarity:'Hyper',       weight:0.5},
+  {id:'infinity',   name:'Infinity',    color:0xbdbdbd, rarity:'Infinity',    weight:0.3},
+  {id:'primordial', name:'Primordial',  color:0x7a0000, rarity:'Primordial',  weight:0.15},
+  {id:'unknown',    name:'???',         color:0x1a1a1a, rarity:'???',         weight:0.03},
+  {id:'colorful',   name:'Color',       color:0xff5fd0, rarity:'Color',       weight:0.015},
+  {id:'noneraser',  name:'Non-eraser',  color:0xffffff, rarity:'Non-eraser',  weight:0.005, transparent:true},
+];
+const GACHA_COST = 100;
+let currentSkin = SKIN_POOL[0];
+let userCoins = 0;
+let userCollection = {};
+let equippedSkin = 'default';
+
+function pickWeightedSkin(){
+  const total = SKIN_POOL.reduce((s,x)=>s+x.weight,0);
+  let r = Math.random()*total;
+  for(const s of SKIN_POOL){ if(r < s.weight) return s; r -= s.weight; }
+  return SKIN_POOL[0];
+}
+
+async function loadUserGachaData(id){
+  await waitFirebase();
+  const dataRef = window._fb.ref('eraser3d_users/'+id);
+  const snap = await window._fb.get(dataRef);
+  const val = snap.val() || {};
+  if(val.coins === undefined || !val.collection){
+    userCoins = 300;
+    userCollection = {default:true};
+    equippedSkin = 'default';
+    const todayStr = new Date().toISOString().slice(0,10);
+    await window._fb.update(dataRef, {coins:userCoins, collection:userCollection, equippedSkin, lastLoginDate:todayStr});
+  } else {
+    userCoins = val.coins;
+    userCollection = val.collection;
+    equippedSkin = val.equippedSkin || 'default';
+    const todayStr = new Date().toISOString().slice(0,10);
+    if(val.lastLoginDate !== todayStr){
+      const DAILY_BONUS = 50;
+      userCoins += DAILY_BONUS;
+      await window._fb.update(dataRef, {coins:userCoins, lastLoginDate:todayStr});
+      setTimeout(()=>toast('출석 보너스 +'+DAILY_BONUS+' 🪙 받았어!'), 400);
+    }
+  }
+  const skin = SKIN_POOL.find(s=>s.id===equippedSkin) || SKIN_POOL[0];
+  currentSkin = skin;
+  applySkin(skin);
+  updateCoinUI();
+}
+
+async function saveUserGachaData(){
+  await waitFirebase();
+  const dataRef = window._fb.ref('eraser3d_users/'+window.CURRENT_USER);
+  await window._fb.update(dataRef, {coins:userCoins, collection:userCollection, equippedSkin});
+}
+
+function updateCoinUI(){
+  document.getElementById('coinAmount').textContent = userCoins;
+  document.getElementById('gachaCoinAmount').textContent = userCoins;
+  document.getElementById('gameCoinAmount').textContent = userCoins;
+}
+
+function resetGachaStage(){
+  document.getElementById('gachaResult').innerHTML =
+    '<div id="stampStage"><div id="doughBlob"></div><div id="moldBlock"></div></div>'
+    +'<div class="rname" style="color:#bbb;">뽑기를 눌러봐!</div>';
+}
+
+async function doGachaPull(){
+  if(userCoins < GACHA_COST){
+    document.getElementById('gachaResult').innerHTML = '<div class="rname" style="color:#e0446b;">코인이 부족해!</div>';
+    return;
+  }
+  const btn = document.getElementById('gachaPullBtn');
+  btn.disabled = true;
+  userCoins -= GACHA_COST;
+  updateCoinUI();
+  const skin = pickWeightedSkin();
+  const isNew = !userCollection[skin.id];
+  userCollection[skin.id] = true;
+
+  resetGachaStage();
+  const dough = document.getElementById('doughBlob');
+  const mold = document.getElementById('moldBlock');
+  document.querySelector('#gachaResult .rname').textContent = '반죽 중...';
+
+  // 1) 틀이 내려와서 찍는다
+  await sleep(150);
+  mold.classList.add('down');
+  dough.classList.add('squash');
+  await sleep(380);
+
+  // 2) 찍힌 자국 = 결과 색상으로 굳는다
+  dough.classList.remove('squash');
+  dough.classList.add('stamped');
+  dough.style.background = '#'+skin.color.toString(16).padStart(6,'0');
+  await sleep(300);
+
+  // 3) 틀이 다시 올라가며 완성된 지우개 공개
+  mold.classList.remove('down');
+  await sleep(350);
+
+  const resultBox = document.getElementById('gachaResult');
+  resultBox.classList.add('revealed');
+  resultBox.querySelector('.rname').outerHTML =
+    '<div class="rname">'+skin.name+(isNew?' (NEW!)':'')+'</div>'
+    +'<div class="rrarity">'+skin.rarity+'</div>';
+
+  await saveUserGachaData();
+  btn.disabled = false;
+}
+
+function sleep(ms){ return new Promise(res=>setTimeout(res,ms)); }
+
+function equipSkin(id){
+  if(!userCollection[id]) return;
+  equippedSkin = id;
+  const skin = SKIN_POOL.find(s=>s.id===id);
+  currentSkin = skin;
+  applySkin(skin);
+  saveUserGachaData();
+  renderCollectionGrid();
+}
+
+function renderProbTable(){
+  const el = document.getElementById('probTable');
+  const total = SKIN_POOL.reduce((s,x)=>s+x.weight,0);
+  el.innerHTML = '';
+  RARITY_ORDER.forEach(r=>{
+    const sum = SKIN_POOL.filter(s=>s.rarity===r).reduce((s,x)=>s+x.weight,0);
+    const pct = (sum/total*100);
+    const pctStr = Math.abs(pct-Math.round(pct))<0.01 ? Math.round(pct)+'%' : pct.toFixed(3).replace(/0+$/,'').replace(/\.$/,'')+'%';
+    const repSkin = SKIN_POOL.find(s=>s.rarity===r);
+    const hex = '#'+repSkin.color.toString(16).padStart(6,'0');
+    const item = document.createElement('div');
+    item.className = 'probItem';
+    item.innerHTML = '<div class="pname">'+r+'</div><div class="ppct" style="color:'+hex+'">'+pctStr+'</div>';
+    el.appendChild(item);
+  });
+}
+
+let collectionFilter = '전체';
+
+function renderCollectionTabs(){
+  const tabs = document.getElementById('collectionTabs');
+  const cats = ['전체', ...RARITY_ORDER];
+  tabs.innerHTML = '';
+  cats.forEach(cat=>{
+    const btn = document.createElement('button');
+    btn.className = 'rarityTab'+(collectionFilter===cat?' active':'');
+    btn.textContent = cat;
+    btn.addEventListener('click', ()=>{ collectionFilter = cat; renderCollectionGrid(); });
+    tabs.appendChild(btn);
+  });
+}
+
+function renderCollectionGrid(){
+  renderCollectionTabs();
+  const grid = document.getElementById('collectionGrid');
+  const list = collectionFilter==='전체' ? SKIN_POOL : SKIN_POOL.filter(s=>s.rarity===collectionFilter);
+  const ownedInList = list.filter(s=>userCollection[s.id]).length;
+  const ownedTotal = Object.keys(userCollection).length;
+  document.getElementById('collectionCount').textContent =
+    collectionFilter==='전체' ? (ownedTotal+' / '+SKIN_POOL.length+' 수집') : (ownedInList+' / '+list.length+' 수집');
+  grid.innerHTML = '';
+  list.forEach(skin=>{
+    const has = !!userCollection[skin.id];
+    const card = document.createElement('div');
+    card.className = 'skinCard'
+      +(has?'':' locked')
+      +(has && equippedSkin===skin.id?' equipped':'');
+    if(has) card.style.borderColor = '#'+skin.color.toString(16).padStart(6,'0');
+    card.innerHTML = '<div class="swatch" style="background:#'+skin.color.toString(16).padStart(6,'0')+'"></div>'
+      +'<div class="sname">'+(has?skin.name:'???')+'</div>';
+    if(has) card.addEventListener('click', ()=>equipSkin(skin.id));
+    grid.appendChild(card);
+  });
+}
 
 // ===== 닉네임 표시 (머리 위 텍스트) =====
 let nameSprite = null;
@@ -462,6 +955,19 @@ function update(){
   const targetCamPos = player.position.clone().add(camOffset);
   camera.position.lerp(targetCamPos, 0.1);
   camera.lookAt(player.position.x, player.position.y+1, player.position.z);
+
+  updateAura(player.userData.auraGroup);
+
+  // 코인 회전 애니메이션 + 습득 판정
+  for(let i=worldCoins.length-1;i>=0;i--){
+    const coin = worldCoins[i];
+    coin.rotation.z += 0.05;
+    const dx = coin.position.x - player.position.x;
+    const dz = coin.position.z - player.position.z;
+    if(Math.hypot(dx,dz) < 1.0){
+      collectWorldCoin(coin);
+    }
+  }
 }
 
 let gameStarted = false;
@@ -508,6 +1014,9 @@ function initPreview(){
   pScene.add(disc);
 
   const previewModel = buildEraserModel();
+  previewModel.userData.bodyMat.color.setHex(currentSkin.color);
+  setAura(previewModel, currentSkin.rarity);
+  previewModels.push(previewModel);
   pScene.add(previewModel);
 
   function resizePreview(){
@@ -524,6 +1033,7 @@ function initPreview(){
     t += 0.01;
     previewModel.rotation.y += 0.012;
     previewModel.position.y = Math.sin(t*1.6)*0.06; // 살짝 둥실둥실
+    updateAura(previewModel.userData.auraGroup);
     pRenderer.render(pScene, pCamera);
   }
   previewLoop();
@@ -535,6 +1045,7 @@ function showHomeScreen(username){
   document.getElementById('homeCharName').textContent = username+'의 지우개';
   document.getElementById('homeScreen').style.display = 'block';
   initPreview();
+  loadUserGachaData(username);
 }
 
 function toast(msg){
@@ -557,8 +1068,28 @@ document.getElementById('navExplore').addEventListener('click', ()=>{
   document.getElementById('homeScreen').style.display = 'none';
   document.getElementById('joystick').style.display = 'block';
   document.getElementById('jumpBtn').style.display = 'flex';
+  document.getElementById('gameCoinHud').style.display = 'block';
   window.startGame();
 });
+document.getElementById('navGacha').addEventListener('click', ()=>{
+  resetGachaStage();
+  updateCoinUI();
+  renderProbTable();
+  document.getElementById('gachaOverlay').style.display = 'flex';
+});
+document.getElementById('gachaCloseBtn').addEventListener('click', ()=>{
+  document.getElementById('gachaOverlay').style.display = 'none';
+});
+document.getElementById('gachaPullBtn').addEventListener('click', doGachaPull);
+
+document.getElementById('navCollection').addEventListener('click', ()=>{
+  renderCollectionGrid();
+  document.getElementById('collectionOverlay').style.display = 'flex';
+});
+document.getElementById('collectionCloseBtn').addEventListener('click', ()=>{
+  document.getElementById('collectionOverlay').style.display = 'none';
+});
+
 document.getElementById('navMini').addEventListener('click', ()=>toast('미니게임은 준비 중이야!'));
 document.getElementById('navBattle').addEventListener('click', ()=>toast('전투는 준비 중이야!'));
 document.getElementById('navRace').addEventListener('click', ()=>toast('레이싱은 준비 중이야!'));
