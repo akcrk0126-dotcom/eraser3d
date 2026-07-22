@@ -884,11 +884,11 @@ function buildEraserModel(shape){
   group.add(makeEye(0.18));
 
   // 팔 (걸을 때 앞뒤로 흔들려서 로블록스 캐릭터처럼 움직이는 느낌을 줌)
-  const armMat = new THREE.MeshStandardMaterial({color:0xffe3ee});
+  const armMat = new THREE.MeshStandardMaterial({color:0x8a8a95});
   function makeArm(side){
     const pivot = new THREE.Group(); // 어깨 기준으로 회전시키기 위한 피벗
-    pivot.position.set(side*0.56, h*0.62, 0);
-    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.07,0.5,8), armMat);
+    pivot.position.set(side*0.85, h*0.62, 0.15);
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.11,0.1,0.55,8), armMat);
     arm.position.y = -0.25; // 피벗(어깨) 아래로 늘어지도록
     arm.castShadow = true;
     pivot.add(arm);
@@ -929,11 +929,11 @@ function setShape(group, shape){
 function animateWalk(group, moving){
   if(group.userData.walkPhase === undefined) group.userData.walkPhase = 0;
   group.userData.walkPhase += moving ? 0.22 : 0.05; // 걸을 땐 빠르게, 멈추면 천천히(대기 모션)
-  const amp = moving ? 0.9 : 0.1;
+  const amp = moving ? 1.0 : 0.2;
   const swing = Math.sin(group.userData.walkPhase)*amp;
   if(group.userData.leftArm)  group.userData.leftArm.rotation.x = swing;
   if(group.userData.rightArm) group.userData.rightArm.rotation.x = -swing;
-  const bounce = moving ? Math.abs(Math.sin(group.userData.walkPhase))*0.06 : 0;
+  const bounce = moving ? Math.abs(Math.sin(group.userData.walkPhase))*0.1 : 0;
   if(group.userData.bodyMesh) group.userData.bodyMesh.position.y = (group.userData.shapeH||BODY_H)/2 + bounce;
 }
 
@@ -1368,6 +1368,7 @@ shiftLockBtn.addEventListener('click', ()=>{
 
 renderer.domElement.addEventListener('touchstart', e=>{
   const t = e.changedTouches[0];
+  if(t.clientX < innerWidth*0.5) return; // 왼쪽(조이스틱 쪽) 터치는 카메라 회전에서 제외
   camDragging = true; camDragId = t.identifier; camLastX = t.clientX;
 });
 addEventListener('touchmove', e=>{
@@ -1423,12 +1424,10 @@ function update(){
   const moving = len>0.05;
   if(moving){
     mx/=len; mz/=len;
-    if(shiftLock){
-      // 쉬프트 락: 조이스틱 입력을 카메라(camYaw) 기준으로 회전시켜 이동
-      const rmx = mx*Math.cos(camYaw) + mz*Math.sin(camYaw);
-      const rmz = -mx*Math.sin(camYaw) + mz*Math.cos(camYaw);
-      mx = rmx; mz = rmz;
-    }
+    // 로블록스처럼: 조이스틱 입력은 항상 카메라가 보는 방향 기준으로 이동함 (쉬프트 락 여부 상관없이)
+    const rmx = mx*Math.cos(camYaw) + mz*Math.sin(camYaw);
+    const rmz = -mx*Math.sin(camYaw) + mz*Math.cos(camYaw);
+    mx = rmx; mz = rmz;
     const nx = player.position.x + mx*SPEED;
     const nz = player.position.z + mz*SPEED;
     if(!collidesObstacle(nx, player.position.z)) player.position.x = nx; // 바위에 막히면 그 축만 정지 (슬라이딩)
@@ -1443,12 +1442,8 @@ function update(){
 
   if(shiftLock){
     player.rotation.y = camYaw; // 쉬프트 락: 항상 카메라(조준점) 방향을 바라봄
-  } else if(!camDragging){
-    // 드래그 중이 아니면 카메라가 캐릭터 뒤로 서서히 자동 정렬
-    let da = player.rotation.y - camYaw;
-    da = Math.atan2(Math.sin(da), Math.cos(da));
-    camYaw += da*0.08;
   }
+  // 쉬프트 락이 아니면 카메라는 자동으로 안 돌아가고 오직 드래그로만 움직임 (실제 로블록스와 동일)
 
   if(jumpPressed && grounded){
     velY = 0.24;
