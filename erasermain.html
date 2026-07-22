@@ -35,6 +35,27 @@
     font-family:'Segoe UI',sans-serif;font-size:14px;font-weight:bold;color:#555;
     box-shadow:0 4px 12px rgba(0,0,0,0.12);
   }
+  #exitExploreBtn{
+    display:none;position:fixed;left:16px;bottom:16px;z-index:15;
+    background:rgba(0,0,0,0.55);color:#fff;border-radius:20px;padding:9px 16px;
+    font-family:'Segoe UI',sans-serif;font-size:13px;font-weight:bold;
+  }
+  #shiftLockBtn{
+    display:none;position:fixed;right:30px;bottom:130px;width:56px;height:56px;border-radius:50%;
+    background:rgba(255,255,255,0.85);border:2px solid rgba(0,0,0,0.15);
+    color:#555;font-size:22px;display:flex;align-items:center;justify-content:center;
+    z-index:10;user-select:none;
+  }
+  #shiftLockBtn.active{background:#ff6fa5;color:#fff;border-color:#ff6fa5;}
+  #crosshair{
+    display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:14px;height:14px;z-index:12;pointer-events:none;
+  }
+  #crosshair::before,#crosshair::after{
+    content:'';position:absolute;background:rgba(255,255,255,0.9);box-shadow:0 0 2px rgba(0,0,0,0.6);
+  }
+  #crosshair::before{left:6px;top:0;width:2px;height:14px;}
+  #crosshair::after{top:6px;left:0;width:14px;height:2px;}
 
   #loginScreen{
     position:fixed;inset:0;z-index:100;
@@ -251,6 +272,9 @@
 <div id="joystick"><div id="stick"></div></div>
 <div id="gameCoinHud">🪙 <span id="gameCoinAmount">0</span></div>
 <div id="huntHud">🔍 <span id="huntHudCount">0/5</span></div>
+<div id="shiftLockBtn">🔓</div>
+<div id="crosshair"></div>
+<div id="exitExploreBtn">🏠 나가기</div>
 <div id="jumpBtn">점프</div>
 
 <div id="welcomeOverlay">
@@ -859,6 +883,21 @@ function buildEraserModel(shape){
   group.add(makeEye(-0.18));
   group.add(makeEye(0.18));
 
+  // 팔 (걸을 때 앞뒤로 흔들려서 로블록스 캐릭터처럼 움직이는 느낌을 줌)
+  const armMat = new THREE.MeshStandardMaterial({color:0xffe3ee});
+  function makeArm(side){
+    const pivot = new THREE.Group(); // 어깨 기준으로 회전시키기 위한 피벗
+    pivot.position.set(side*0.56, h*0.62, 0);
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.07,0.5,8), armMat);
+    arm.position.y = -0.25; // 피벗(어깨) 아래로 늘어지도록
+    arm.castShadow = true;
+    pivot.add(arm);
+    group.add(pivot);
+    return pivot;
+  }
+  group.userData.leftArm = makeArm(-1);
+  group.userData.rightArm = makeArm(1);
+
   group.userData.bodyMat = bodyMat;
   group.userData.bodyMesh = body;
   group.userData.band = band;
@@ -880,8 +919,22 @@ function setShape(group, shape){
   group.userData.band.position.y = h*0.32;
   const eyeY = h*0.78;
   group.children.forEach(c=>{ if(c.userData.isEye) c.position.y = eyeY; });
+  if(group.userData.leftArm) group.userData.leftArm.position.y = h*0.62;
+  if(group.userData.rightArm) group.userData.rightArm.position.y = h*0.62;
   group.userData.shape = shape;
   group.userData.shapeH = h;
+}
+
+// 걷기 애니메이션: 팔 흔들기 + 몸통 통통 튀는 바운스 (로블록스 캐릭터 느낌, 캐릭터별로 위상을 따로 가짐)
+function animateWalk(group, moving){
+  if(group.userData.walkPhase === undefined) group.userData.walkPhase = 0;
+  group.userData.walkPhase += moving ? 0.22 : 0.05; // 걸을 땐 빠르게, 멈추면 천천히(대기 모션)
+  const amp = moving ? 0.9 : 0.1;
+  const swing = Math.sin(group.userData.walkPhase)*amp;
+  if(group.userData.leftArm)  group.userData.leftArm.rotation.x = swing;
+  if(group.userData.rightArm) group.userData.rightArm.rotation.x = -swing;
+  const bounce = moving ? Math.abs(Math.sin(group.userData.walkPhase))*0.06 : 0;
+  if(group.userData.bodyMesh) group.userData.bodyMesh.position.y = (group.userData.shapeH||BODY_H)/2 + bounce;
 }
 
 const player = buildEraserModel();
@@ -1297,6 +1350,41 @@ const jumpBtn = document.getElementById('jumpBtn');
 jumpBtn.addEventListener('touchstart', e=>{e.preventDefault(); jumpPressed=true;});
 addEventListener('keydown', e=>{if(e.code==='Space') jumpPressed=true;});
 
+// ===== 쉬프트 락 & 카메라 드래그(오빗) =====
+// 락 꺼짐: 캐릭터가 이동 방향을 보고, 화면을 드래그하면 카메라만 자유롭게 둘러볼 수 있음
+// 락 켜짐: 로블록스 쉬프트락처럼 캐릭터가 항상 카메라(조준점) 방향을 보고, 조이스틱은 그 방향 기준으로 이동
+let camYaw = 0;
+let shiftLock = false;
+let camDragging = false, camDragId = null, camLastX = 0;
+const shiftLockBtn = document.getElementById('shiftLockBtn');
+const crosshair = document.getElementById('crosshair');
+
+shiftLockBtn.addEventListener('click', ()=>{
+  shiftLock = !shiftLock;
+  shiftLockBtn.classList.toggle('active', shiftLock);
+  shiftLockBtn.textContent = shiftLock ? '🔒' : '🔓';
+  crosshair.style.display = shiftLock ? 'block' : 'none';
+});
+
+renderer.domElement.addEventListener('touchstart', e=>{
+  const t = e.changedTouches[0];
+  camDragging = true; camDragId = t.identifier; camLastX = t.clientX;
+});
+addEventListener('touchmove', e=>{
+  for(const t of e.changedTouches){
+    if(t.identifier===camDragId){
+      const dx = t.clientX - camLastX;
+      camYaw -= dx*0.008;
+      camLastX = t.clientX;
+    }
+  }
+});
+addEventListener('touchend', e=>{
+  for(const t of e.changedTouches){
+    if(t.identifier===camDragId){ camDragging = false; camDragId = null; }
+  }
+});
+
 // ===== 이동/물리 =====
 let velY = 0;
 const GRAVITY = -0.011;
@@ -1332,16 +1420,34 @@ function update(){
   mz += joyVec.y;
 
   const len = Math.hypot(mx,mz);
-  if(len>0.05){
+  const moving = len>0.05;
+  if(moving){
     mx/=len; mz/=len;
+    if(shiftLock){
+      // 쉬프트 락: 조이스틱 입력을 카메라(camYaw) 기준으로 회전시켜 이동
+      const rmx = mx*Math.cos(camYaw) + mz*Math.sin(camYaw);
+      const rmz = -mx*Math.sin(camYaw) + mz*Math.cos(camYaw);
+      mx = rmx; mz = rmz;
+    }
     const nx = player.position.x + mx*SPEED;
     const nz = player.position.z + mz*SPEED;
     if(!collidesObstacle(nx, player.position.z)) player.position.x = nx; // 바위에 막히면 그 축만 정지 (슬라이딩)
     if(!collidesObstacle(player.position.x, nz)) player.position.z = nz;
-    facing = Math.atan2(mx, mz);
-    let da = facing - player.rotation.y;
-    da = Math.atan2(Math.sin(da), Math.cos(da)); // -PI~PI로 정규화 (반대편으로 홱 도는 것 방지)
-    player.rotation.y += da*0.08;
+    if(!shiftLock){
+      facing = Math.atan2(mx, mz);
+      let da = facing - player.rotation.y;
+      da = Math.atan2(Math.sin(da), Math.cos(da)); // -PI~PI로 정규화 (반대편으로 홱 도는 것 방지)
+      player.rotation.y += da*0.08;
+    }
+  }
+
+  if(shiftLock){
+    player.rotation.y = camYaw; // 쉬프트 락: 항상 카메라(조준점) 방향을 바라봄
+  } else if(!camDragging){
+    // 드래그 중이 아니면 카메라가 캐릭터 뒤로 서서히 자동 정렬
+    let da = player.rotation.y - camYaw;
+    da = Math.atan2(Math.sin(da), Math.cos(da));
+    camYaw += da*0.08;
   }
 
   if(jumpPressed && grounded){
@@ -1359,7 +1465,14 @@ function update(){
     grounded = true;
   }
 
-  const camOffset = new THREE.Vector3(0, 4.5, 7);
+  animateWalk(player, moving && grounded);
+
+  const camDist = 7, camHeight = 4.5;
+  const camOffset = new THREE.Vector3(
+    -Math.sin(camYaw)*camDist,
+    camHeight,
+    -Math.cos(camYaw)*camDist
+  );
   const targetCamPos = player.position.clone().add(camOffset);
   camera.position.lerp(targetCamPos, 0.1);
   camera.lookAt(player.position.x, player.position.y+1, player.position.z);
@@ -1454,6 +1567,7 @@ function initPreview(){
     t += 0.01;
     previewModel.rotation.y += 0.012;
     previewModel.position.y = Math.sin(t*1.6)*0.06; // 살짝 둥실둥실
+    animateWalk(previewModel, false);
     updateAura(previewModel.userData.auraGroup);
     pRenderer.render(pScene, pCamera);
   }
@@ -1486,14 +1600,47 @@ function toast(msg){
   el._t = setTimeout(()=>{ el.style.opacity = '0'; }, 1500);
 }
 
+// ===== 화면 잠금(자동 꺼짐) 방지 =====
+let wakeLock = null;
+async function requestWakeLock(){
+  try{
+    if('wakeLock' in navigator){
+      wakeLock = await navigator.wakeLock.request('screen');
+    }
+  }catch(e){ /* 지원 안 하거나 실패해도 게임 진행에는 지장 없음 */ }
+}
+document.addEventListener('visibilitychange', ()=>{
+  if(wakeLock !== null && document.visibilityState === 'visible' && gameStarted){
+    requestWakeLock();
+  }
+});
+
 document.getElementById('navExplore').addEventListener('click', ()=>{
   document.getElementById('homeScreen').style.display = 'none';
   document.getElementById('joystick').style.display = 'block';
   document.getElementById('jumpBtn').style.display = 'flex';
   document.getElementById('gameCoinHud').style.display = 'block';
   document.getElementById('huntHud').style.display = 'block';
+  document.getElementById('shiftLockBtn').style.display = 'flex';
+  document.getElementById('exitExploreBtn').style.display = 'block';
   renderHuntList();
   window.startGame();
+  requestWakeLock();
+});
+document.getElementById('exitExploreBtn').addEventListener('click', async ()=>{
+  // 나가기 전에 지금 장착 중인 스킨/형태/코인/찾은 목록을 확실히 저장
+  await saveUserGachaData();
+  await saveFoundErasers();
+  gameStarted = false;
+  document.getElementById('joystick').style.display = 'none';
+  document.getElementById('jumpBtn').style.display = 'none';
+  document.getElementById('gameCoinHud').style.display = 'none';
+  document.getElementById('huntHud').style.display = 'none';
+  document.getElementById('shiftLockBtn').style.display = 'none';
+  document.getElementById('exitExploreBtn').style.display = 'none';
+  document.getElementById('crosshair').style.display = 'none';
+  document.getElementById('homeScreen').style.display = 'block';
+  if(wakeLock){ try{ await wakeLock.release(); }catch(e){} wakeLock = null; }
 });
 document.getElementById('huntHud').addEventListener('click', ()=>{
   renderHuntList();
