@@ -35,12 +35,6 @@
     font-family:'Segoe UI',sans-serif;font-size:14px;font-weight:bold;color:#555;
     box-shadow:0 4px 12px rgba(0,0,0,0.12);
   }
-  #kingdomHud{
-    display:none;position:fixed;top:64px;right:16px;z-index:15;cursor:pointer;
-    background:rgba(255,255,255,0.85);border-radius:20px;padding:8px 16px;
-    font-family:'Segoe UI',sans-serif;font-size:14px;font-weight:bold;color:#7a5fd1;
-    box-shadow:0 4px 12px rgba(0,0,0,0.12);
-  }
   #exitExploreBtn{
     display:none;position:fixed;left:16px;bottom:16px;z-index:15;
     background:rgba(0,0,0,0.55);color:#fff;border-radius:20px;padding:9px 16px;
@@ -117,6 +111,32 @@
     position:absolute;top:0;left:0;right:0;bottom:150px;
   }
   #charViewport canvas{width:100%;height:100%;}
+
+  /* ═══ 킹덤 (쿠키런 킹덤 스타일 2.5D 화면, 캐릭터 조작 없음) ═══ */
+  #kingdomScreen{
+    position:fixed;inset:0;z-index:90;display:none;
+    background:linear-gradient(180deg,#bfe8ff 0%,#eaffea 60%,#d8f2c0 100%);
+  }
+  #kingdomViewport{ position:absolute; inset:0; }
+  #kingdomViewport canvas{ width:100%; height:100%; }
+  #kingdomTopBar{
+    position:absolute;top:16px;left:16px;right:16px;z-index:2;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  #kingdomCoinBadge{
+    background:rgba(255,255,255,0.9);border-radius:20px;padding:8px 16px;
+    font-family:'Segoe UI',sans-serif;font-weight:bold;color:#a5497a;font-size:14px;
+    box-shadow:0 4px 12px rgba(0,0,0,0.12);
+  }
+  #kingdomExitBtn{
+    background:rgba(0,0,0,0.55);color:#fff;border-radius:20px;padding:8px 16px;
+    font-family:'Segoe UI',sans-serif;font-weight:bold;font-size:13px;cursor:pointer;
+  }
+  #kingdomBuildBtn{
+    position:absolute;left:50%;bottom:26px;transform:translateX(-50%);z-index:2;
+    background:#7a5fd1;color:#fff;border:none;border-radius:24px;padding:14px 28px;
+    font-family:'Segoe UI',sans-serif;font-weight:bold;font-size:15px;box-shadow:0 6px 16px rgba(0,0,0,0.2);
+  }
   #homeCharName{
     position:absolute;left:0;right:0;bottom:170px;text-align:center;
     font-size:13px;color:#a5497a;font-weight:bold;letter-spacing:2px;
@@ -278,7 +298,6 @@
 <div id="joystick"><div id="stick"></div></div>
 <div id="gameCoinHud">🪙 <span id="gameCoinAmount">0</span></div>
 <div id="huntHud">🔍 <span id="huntHudCount">0/5</span></div>
-<div id="kingdomHud">🏰 건설</div>
 <div id="shiftLockBtn">🔓</div>
 <div id="crosshair"></div>
 <div id="exitExploreBtn">🏠 나가기</div>
@@ -326,6 +345,15 @@
     <div id="probTable"></div>
     <button class="modalCloseBtn" id="gachaCloseBtn">닫기</button>
   </div>
+</div>
+
+<div id="kingdomScreen">
+  <div id="kingdomViewport"></div>
+  <div id="kingdomTopBar">
+    <div id="kingdomCoinBadge">🪙 <span id="kingdomViewCoin">0</span></div>
+    <div id="kingdomExitBtn">🏠 나가기</div>
+  </div>
+  <button id="kingdomBuildBtn">🏰 건설하기</button>
 </div>
 
 <div class="modalOverlay" id="kingdomOverlay">
@@ -1312,6 +1340,8 @@ function updateCoinUI(){
   document.getElementById('coinAmount').textContent = userCoins;
   document.getElementById('gachaCoinAmount').textContent = userCoins;
   document.getElementById('gameCoinAmount').textContent = userCoins;
+  const kv = document.getElementById('kingdomViewCoin');
+  if(kv) kv.textContent = userCoins;
 }
 
 function resetGachaStage(){
@@ -1867,7 +1897,7 @@ document.addEventListener('visibilitychange', ()=>{
   }
 });
 
-function enterExploreMode(spawnPos, showKingdomBtn){
+function enterExploreMode(){
   document.getElementById('homeScreen').style.display = 'none';
   document.getElementById('joystick').style.display = 'block';
   document.getElementById('jumpBtn').style.display = 'flex';
@@ -1875,19 +1905,14 @@ function enterExploreMode(spawnPos, showKingdomBtn){
   document.getElementById('huntHud').style.display = 'block';
   document.getElementById('shiftLockBtn').style.display = 'flex';
   document.getElementById('exitExploreBtn').style.display = 'block';
-  document.getElementById('kingdomHud').style.display = showKingdomBtn ? 'block' : 'none';
-  if(spawnPos){ player.position.set(spawnPos.x, 0, spawnPos.z); }
+  player.position.set(0, 0, 0);
   renderHuntList();
   window.startGame();
   requestWakeLock();
 }
 
-document.getElementById('navExplore').addEventListener('click', ()=>{
-  enterExploreMode({x:0, z:0}, false);
-});
-document.getElementById('navKingdom').addEventListener('click', ()=>{
-  enterExploreMode(KINGDOM_SPAWN, true);
-});
+document.getElementById('navExplore').addEventListener('click', enterExploreMode);
+
 document.getElementById('exitExploreBtn').addEventListener('click', async ()=>{
   // 나가기 전에 지금 장착 중인 스킨/형태/코인/찾은 목록을 확실히 저장
   await saveUserGachaData();
@@ -1897,14 +1922,63 @@ document.getElementById('exitExploreBtn').addEventListener('click', async ()=>{
   document.getElementById('jumpBtn').style.display = 'none';
   document.getElementById('gameCoinHud').style.display = 'none';
   document.getElementById('huntHud').style.display = 'none';
-  document.getElementById('kingdomHud').style.display = 'none';
   document.getElementById('shiftLockBtn').style.display = 'none';
   document.getElementById('exitExploreBtn').style.display = 'none';
   document.getElementById('crosshair').style.display = 'none';
   document.getElementById('homeScreen').style.display = 'block';
   if(wakeLock){ try{ await wakeLock.release(); }catch(e){} wakeLock = null; }
 });
-document.getElementById('kingdomHud').addEventListener('click', ()=>{
+
+// ===== 킹덤 2.5D 화면 (쿠키런 킹덤 스타일, 캐릭터 조작 없음) =====
+let kingdomViewInited = false;
+let kingdomCamera, kingdomRenderer;
+function initKingdomView(){
+  if(kingdomViewInited) return;
+  kingdomViewInited = true;
+  const vpEl = document.getElementById('kingdomViewport');
+  kingdomCamera = new THREE.PerspectiveCamera(45, vpEl.clientWidth/vpEl.clientHeight, 0.1, 500);
+  kingdomCamera.position.set(KINGDOM_CENTER.x+22, 20, KINGDOM_CENTER.z+22);
+  kingdomCamera.lookAt(KINGDOM_CENTER.x, 0, KINGDOM_CENTER.z);
+
+  kingdomRenderer = new THREE.WebGLRenderer({antialias:true});
+  kingdomRenderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  kingdomRenderer.setSize(vpEl.clientWidth, vpEl.clientHeight);
+  vpEl.appendChild(kingdomRenderer.domElement);
+
+  addEventListener('resize', ()=>{
+    if(document.getElementById('kingdomScreen').style.display !== 'block') return;
+    const w = vpEl.clientWidth, h = vpEl.clientHeight;
+    kingdomCamera.aspect = w/h;
+    kingdomCamera.updateProjectionMatrix();
+    kingdomRenderer.setSize(w,h);
+  });
+
+  let ang = 0;
+  function kingdomLoop(){
+    requestAnimationFrame(kingdomLoop);
+    if(document.getElementById('kingdomScreen').style.display !== 'block') return;
+    ang += 0.0025; // 쿠키런 킹덤처럼 아주 천천히 도는 디오라마 느낌
+    const r = 31;
+    kingdomCamera.position.set(KINGDOM_CENTER.x+Math.cos(ang)*r, 20, KINGDOM_CENTER.z+Math.sin(ang)*r);
+    kingdomCamera.lookAt(KINGDOM_CENTER.x, 0, KINGDOM_CENTER.z);
+    kingdomRenderer.render(scene, kingdomCamera);
+  }
+  kingdomLoop();
+}
+
+document.getElementById('navKingdom').addEventListener('click', ()=>{
+  document.getElementById('homeScreen').style.display = 'none';
+  document.getElementById('kingdomScreen').style.display = 'block';
+  document.getElementById('kingdomViewCoin').textContent = userCoins;
+  initKingdomView();
+});
+document.getElementById('kingdomExitBtn').addEventListener('click', async ()=>{
+  await saveKingdom();
+  await saveUserGachaData();
+  document.getElementById('kingdomScreen').style.display = 'none';
+  document.getElementById('homeScreen').style.display = 'block';
+});
+document.getElementById('kingdomBuildBtn').addEventListener('click', ()=>{
   renderKingdomList();
   document.getElementById('kingdomOverlay').style.display = 'flex';
 });
