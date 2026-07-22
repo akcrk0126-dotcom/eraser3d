@@ -29,6 +29,12 @@
     font-family:'Segoe UI',sans-serif;font-size:14px;font-weight:bold;color:#a5497a;
     box-shadow:0 4px 12px rgba(0,0,0,0.12);
   }
+  #huntHud{
+    display:none;position:fixed;top:16px;right:16px;z-index:15;cursor:pointer;
+    background:rgba(255,255,255,0.85);border-radius:20px;padding:8px 16px;
+    font-family:'Segoe UI',sans-serif;font-size:14px;font-weight:bold;color:#555;
+    box-shadow:0 4px 12px rgba(0,0,0,0.12);
+  }
 
   #loginScreen{
     position:fixed;inset:0;z-index:100;
@@ -157,6 +163,21 @@
   }
   .rarityTab.active{background:#ff6fa5;color:#fff;}
 
+  #huntList{
+    display:flex;flex-direction:column;gap:8px;margin-bottom:14px;max-height:340px;overflow-y:auto;
+  }
+  .huntRow{
+    display:flex;align-items:center;gap:10px;background:#faf7f9;border-radius:12px;padding:9px 10px;
+    text-align:left;
+  }
+  .huntRow.found{background:#fff0f6;cursor:pointer;}
+  .huntRow .hIcon{font-size:20px;width:24px;text-align:center;}
+  .huntRow .hInfo{flex:1;}
+  .huntRow .hName{font-size:13px;font-weight:bold;color:#444;}
+  .huntRow.locked .hName{color:#bbb;}
+  .huntRow .hTier{font-size:10px;color:#a5497a;}
+  .huntRow .hEquip{font-size:10px;font-weight:bold;color:#ff6fa5;}
+
   #probTable{
     display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;justify-content:center;
   }
@@ -229,6 +250,7 @@
 
 <div id="joystick"><div id="stick"></div></div>
 <div id="gameCoinHud">🪙 <span id="gameCoinAmount">0</span></div>
+<div id="huntHud">🔍 <span id="huntHudCount">0/5</span></div>
 <div id="jumpBtn">점프</div>
 
 <div id="welcomeOverlay">
@@ -251,7 +273,7 @@
     <button class="navBtn primary" id="navExplore"><span class="ic">🗺️</span>탐험</button>
     <button class="navBtn primary" id="navGacha"><span class="ic">🎁</span>가챠</button>
     <button class="navBtn" id="navCollection"><span class="ic">📖</span>도감</button>
-    <button class="navBtn" id="navMini"><span class="ic">🎮</span>미니게임<span class="lock">준비중</span></button>
+    <button class="navBtn primary" id="navMini"><span class="ic">🔍</span>지우개 찾기</button>
     <button class="navBtn" id="navBattle"><span class="ic">⚔️</span>전투<span class="lock">준비중</span></button>
     <button class="navBtn" id="navRace"><span class="ic">🏁</span>레이싱<span class="lock">준비중</span></button>
   </div>
@@ -274,12 +296,29 @@
   </div>
 </div>
 
+<div class="modalOverlay" id="alphabetOverlay">
+  <div class="modalCard">
+    <h2>🔍 지우개 찾기</h2>
+    <div class="modalCoin" id="alphabetCount">0 / 5 발견</div>
+    <div id="huntList"></div>
+    <div style="font-size:11px;color:#999;margin-bottom:10px;">맵 곳곳에 등급별로 숨겨진 지우개 종류를 찾아봐. 찾은 지우개는 탭해서 장착하면 색상/아우라랑 별개로 지우개 겉모습 자체가 바뀌어!</div>
+    <button class="modalCloseBtn" id="alphabetCloseBtn">닫기</button>
+  </div>
+</div>
+
 <div class="modalOverlay" id="collectionOverlay">
   <div class="modalCard">
     <h2>📖 지우개 도감</h2>
+    <div id="slotTabs" style="display:flex;gap:8px;justify-content:center;margin-bottom:10px;">
+      <button class="rarityTab active" id="slotTabSkin">🎨 스킨</button>
+      <button class="rarityTab" id="slotTabWeapon">⚔️ 무기</button>
+    </div>
     <div class="modalCoin" id="collectionCount">0 / 0 수집</div>
     <div id="collectionTabs"></div>
     <div id="collectionGrid"></div>
+    <div id="weaponPlaceholder" style="display:none;padding:30px 10px;color:#aaa;font-size:13px;">
+      ⚔️<br>무기 장착은 전투 시스템과 함께 준비 중이야!
+    </div>
     <button class="modalCloseBtn" id="collectionCloseBtn">닫기</button>
   </div>
 </div>
@@ -429,44 +468,316 @@ sun.shadow.camera.top=40; sun.shadow.camera.bottom=-40;
 scene.add(sun);
 scene.add(new THREE.AmbientLight(0xffffff, 0.6));
 
-// ===== 바닥 (회색) =====
+// ===== 바닥 (잔디) =====
 const ground = new THREE.Mesh(
   new THREE.PlaneGeometry(200,200),
-  new THREE.MeshStandardMaterial({color:0x999999})
+  new THREE.MeshStandardMaterial({color:0x8fd18f})
 );
 ground.rotation.x = -Math.PI/2;
 ground.receiveShadow = true;
 scene.add(ground);
 
-// 참고용 박스들 (맵 오브젝트 자리)
-for(let i=0;i<15;i++){
-  const box = new THREE.Mesh(
-    new THREE.BoxGeometry(2,2,2),
-    new THREE.MeshStandardMaterial({color:0xffffff})
+// ===== 맵: 지형 패치 / 나무 / 바위(장애물) / 계단식 플랫폼 =====
+const platforms = []; // 밟고 올라갈 수 있는 오브젝트 {minX,maxX,minZ,maxZ,topY}
+const obstacles = [];  // 부딪히면 막히는 원형 충돌체 {x,z,radius}
+
+function addGroundPatch(x,z,r,color){
+  const patch = new THREE.Mesh(new THREE.CircleGeometry(r,28), new THREE.MeshStandardMaterial({color}));
+  patch.rotation.x = -Math.PI/2;
+  patch.position.set(x,0.02,z);
+  patch.receiveShadow = true;
+  scene.add(patch);
+}
+
+function addTree(x,z,scale){
+  scale = scale||1;
+  const trunk = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.15*scale,0.2*scale,1.1*scale,8),
+    new THREE.MeshStandardMaterial({color:0x8a5a3c})
   );
-  box.position.set((Math.random()-0.5)*60, 1, (Math.random()-0.5)*60);
-  box.castShadow = true; box.receiveShadow = true;
-  scene.add(box);
+  trunk.position.set(x,0.55*scale,z);
+  trunk.castShadow = true;
+  scene.add(trunk);
+  const leaves = new THREE.Mesh(
+    new THREE.ConeGeometry(0.85*scale,1.6*scale,10),
+    new THREE.MeshStandardMaterial({color:0x5fbf6f})
+  );
+  leaves.position.set(x,1.55*scale,z);
+  leaves.castShadow = true;
+  scene.add(leaves);
+}
+
+function addRock(x,z,scale){
+  scale = scale||1;
+  const rock = new THREE.Mesh(
+    new THREE.DodecahedronGeometry(0.6*scale,0),
+    new THREE.MeshStandardMaterial({color:0x8d8d7a, flatShading:true})
+  );
+  rock.position.set(x,0.4*scale,z);
+  rock.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, 0);
+  rock.castShadow = true;
+  scene.add(rock);
+  obstacles.push({x,z,radius:0.6*scale});
+}
+
+function addPlatform(x,z,w,d,y,h,color){
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(w,h,d),
+    new THREE.MeshStandardMaterial({color: color||0xffffff})
+  );
+  mesh.position.set(x, y+h/2, z);
+  mesh.castShadow = true; mesh.receiveShadow = true;
+  scene.add(mesh);
+  platforms.push({minX:x-w/2,maxX:x+w/2,minZ:z-d/2,maxZ:z+d/2, topY:y+h});
+}
+
+// 지형 패치 (모래/돌 광장)
+addGroundPatch(0, 0, 8, 0xd8c9a0);      // 스폰 근처 모래 광장
+addGroundPatch(-24, 18, 10, 0xb8b8b8);  // 돌 광장
+addGroundPatch(22, -20, 9, 0xd8c9a0);   // 모래 지대
+
+// 나무 (맵 테두리 쪽에 둘러싸듯 배치)
+for(let i=0;i<18;i++){
+  const ang = (i/18)*Math.PI*2;
+  const r = 32 + Math.random()*8;
+  addTree(Math.cos(ang)*r, Math.sin(ang)*r, 0.8+Math.random()*0.6);
+}
+
+// 바위 (장애물, 부딪히면 막힘)
+const rockSpots = [
+  [6,4],[9,-3],[-7,7],[-10,-6],[14,10],[-14,12],[5,-14],[-5,18],[18,3],[-18,-4],[3,20],[-3,-20]
+];
+rockSpots.forEach(([x,z])=>addRock(x,z,0.9+Math.random()*0.6));
+
+// 계단식 플랫폼 타워 (밟고 올라가는 구간) - 9단까지 확장, 위쪽 단은 고난도 지우개 배치용
+const towerASteps = [];
+[
+  [10,10, 3,3, 0,1, 0xffb997],
+  [13,10, 3,3, 1,1, 0xffaa85],
+  [16,10, 3,3, 2,1, 0xff9d75],
+  [19,10, 4,4, 3,1, 0xffd76f], // 보상 코인 배치된 원래 꼭대기
+  [19,13, 3,3, 4,1, 0xffcf5f],
+  [19,16, 3,3, 5,1, 0xffc24f],
+  [19,19, 3,3, 6,1, 0xffb53f],
+  [19,22, 3,3, 7,1, 0xffa82f],
+  [19,25, 4,4, 8,1, 0xff9b1f],
+].forEach(([x,z,w,d,y,h,c])=>{
+  addPlatform(x,z,w,d,y,h,c);
+  towerASteps.push({x,z,topY:y+h});
+});
+
+// 둥둥 뜬 징검다리 플랫폼 - 마찬가지로 9단까지 확장
+const towerBSteps = [];
+[
+  [-10,-10, 2.5,2.5, 0,0.6,   0x9fd1ff],
+  [-13,-13, 2.5,2.5, 0.6,0.6, 0x9fd1ff],
+  [-16,-16, 2.5,2.5, 1.2,0.6, 0x9fd1ff],
+  [-19,-19, 3,3,     1.8,0.6, 0x7fc4ff],
+  [-22,-19, 2.5,2.5, 2.4,0.6, 0x7fc4ff],
+  [-25,-19, 2.5,2.5, 3.0,0.6, 0x6fb7ff],
+  [-28,-19, 2.5,2.5, 3.6,0.6, 0x6fb7ff],
+  [-31,-19, 2.5,2.5, 4.2,0.6, 0x5faaff],
+  [-34,-19, 3,3,     4.8,0.6, 0x5faaff],
+].forEach(([x,z,w,d,y,h,c])=>{
+  addPlatform(x,z,w,d,y,h,c);
+  towerBSteps.push({x,z,topY:y+h});
+});
+
+// ===== 지우개 찾기 (미니게임: 맵 곳곳에 등급별로 숨은 지우개 "종류" 100가지 찾기) =====
+// 찾은 지우개는 장착하면 색상/아우라와 별개로 캐릭터의 실제 겉모습(형태)이 바뀜
+// 난이도 10단계 × 10개씩 = 100개. 낮은 단계는 지상에 거리로 난이도를 주고,
+// 🟡🔴⚫ 세 단계는 두 플랫폼 타워의 점점 높은 단에 숨겨서 "더 높이 올라가야" 난이도가 오르게 함
+const TIER_META = [
+  {emoji:'⚪', label:'누구나 (Easy)'},
+  {emoji:'🟢', label:'평범 (Normal)'},
+  {emoji:'🔵', label:'보통 (Medium)'},
+  {emoji:'🟣', label:'어려움 (Hard)'},
+  {emoji:'🟡', label:'혹독함 (Hard+)'},
+  {emoji:'🟠', label:'미침 (Insane)'},
+  {emoji:'🔴', label:'극악 (Extreme)'},
+  {emoji:'🟤', label:'무서움 (Terrifying)'},
+  {emoji:'⚫', label:'불가능 (Impossible)'},
+  {emoji:'👑', label:'신화 (Mythical)'},
+];
+const HUNT_SHAPES = ['block','round','gem','spike','twist','diamond','tetra','dodeca','capsule','donut'];
+const GROUND_TIER_IDX = [0,1,2,3,5,7,9];   // 지상 배치 (거리로 난이도)
+const PLATFORM_TIER_IDX = [4,6,8];          // 타워 배치 (높이로 난이도)
+const PLATFORM_SPOTS = [...towerASteps, ...towerBSteps]; // 18곳
+
+// 등급별(0~9) 실제 지우개 이름 10개씩 - 전부 다른 이름
+const ERASER_NAMES = [
+  ['새하얀 네모 지우개','반쯤 쓴 지우개','연필심 박힌 지우개','길가에 떨어진 지우개','모서리가 닳은 지우개','딱딱하게 굳은 지우개','먼지 쌓인 지우개','알록달록 무지개 지우개','짱짱한 검은 지우개','교실 바닥 지우개'],
+  ['하트 모양 지우개','향기 나는 딸기 지우개','클립이 꽂힌 지우개','반갈죽된 지우개','미술용 미술 지우개','수박 한 조각 지우개','낙서 가득한 지우개','별 모양 지우개','필통 구석 지우개','슬라임 모양 지우개'],
+  ['형광빛 네온 지우개','야광 지우개','투명한 유리 지우개','젤리 곰 지우개','초콜릿 깍두기 지우개','고양이 발바닥 지우개','나노 미니 지우개','나뭇잎 지우개','주사위 지우개','공룡 알 지우개'],
+  ['거대 왕 지우개','톱니바퀴 지우개','황금빛 치즈 지우개','포션 병 지우개','자석 지우개','보물상자 지우개','마법서 모양 지우개','얼음 결정 지우개','반짝이 지우개','수정 구슬 지우개'],
+  ['영혼을 지우는 지우개','비눗방울 환영 지우개','요정 가루 지우개','신비한 잉크 지우개','에메랄드 결정 지우개','바람의 속삭임 지우개','몽환의 꿈 지우개','자수정 파편 지우개','대지의 파편 지우개','신기루 지우개'],
+  ['룬 문자 지우개','별빛 조각 지우개','심해의 블루 지우개','황혼의 노을 지우개','은하수 지우개','붉은 마력 지우개','유령 신사 지우개','마법사의 연구 지우개','고대 연금술 지우개','소용돌이 차원 지우개'],
+  ['심연의 칠흑 지우개','그림자 포획 지우개','저주받은 핏빛 지우개','망각의 지우개','악마의 뿔 지우개','해골 각인 지우개','유독성 독 지우개','네크로맨서 지우개','눈동자가 그려진 지우개','미믹 함정 지우개'],
+  ['녹아내리는 지우개','깨진 경고판 지우개','차원 균열 지우개','순금 황금 지우개','불멸의 화염 지우개','절대영도 얼음 지우개','벼락 맞은 지우개','용의 눈동자 지우개','중력 무시 지우개','메카닉 로봇 지우개'],
+  ['다이아몬드 지우개','성스러운 빛의 지우개','시간 조작 지우개','성운의 별빛 지우개','천사의 날개 지우개','오로라 파편 지우개','초신성 지우개','마왕의 징표 지우개','지우개 똥 모음집','역사를 지우는 자'],
+  ['태초의 지우개','종말의 흑구멍 지우개','우주 먼지 지우개','픽셀 붕괴 지우개','투명인간의 지우개','개발자의 실수로 만든 지우개','진실을 지우는 지우개','시공간 파멸 지우개','창조주의 지우개','모든 것의 끝, 최종 지우개'],
+];
+
+// 항목별 고유 색상 (전체 인덱스 기준 색상환을 골고루 나눠 각기 다른 색으로)
+function huntColorFor(tier, i){
+  const globalIdx = tier*10 + i;
+  const hue = (globalIdx * 37) % 360; // 37° 간격으로 건너뛰어 인접 항목끼리도 색이 확 달라지게
+  return new THREE.Color().setHSL(hue/360, 0.68, 0.56).getHex();
+}
+
+const HIDDEN_ERASERS = [];
+let groundGlobalIdx = 0;
+GROUND_TIER_IDX.forEach((tier, bandIdx)=>{
+  for(let i=0;i<10;i++){
+    const shape = HUNT_SHAPES[(tier+i) % HUNT_SHAPES.length];
+    const ang = groundGlobalIdx * 2.399963; // 골든 앵글로 고르게 퍼뜨림
+    const r = 4 + bandIdx*8 + i*0.55;
+    HIDDEN_ERASERS.push({
+      id: 'g'+tier+'_'+i,
+      name: ERASER_NAMES[tier][i],
+      shape, tier, color: huntColorFor(tier,i),
+      emoji: TIER_META[tier].emoji, label: TIER_META[tier].label,
+      pos: {x:Math.cos(ang)*r, y:0.9, z:Math.sin(ang)*r},
+    });
+    groundGlobalIdx++;
+  }
+});
+PLATFORM_TIER_IDX.forEach((tier, bandIdx)=>{
+  for(let i=0;i<10;i++){
+    const shape = HUNT_SHAPES[(tier+i) % HUNT_SHAPES.length];
+    const spotIdx = (bandIdx*10 + i) % PLATFORM_SPOTS.length;
+    const spot = PLATFORM_SPOTS[spotIdx];
+    const offAng = i*1.1;
+    HIDDEN_ERASERS.push({
+      id: 'p'+tier+'_'+i,
+      name: ERASER_NAMES[tier][i],
+      shape, tier, color: huntColorFor(tier,i),
+      emoji: TIER_META[tier].emoji, label: TIER_META[tier].label,
+      pos: {x:spot.x+Math.cos(offAng)*0.6, y:spot.topY+0.6, z:spot.z+Math.sin(offAng)*0.6},
+    });
+  }
+});
+HIDDEN_ERASERS.sort((a,b)=>a.tier-b.tier);
+
+const foundErasers = {}; // {id:true} - 로그인 후 파이어베이스에서 불러와 채움
+let equippedHuntId = null; // 장착 중인 발견 지우개 id (null이면 가챠 스킨 색 그대로, 형태는 block)
+const huntMeshes = [];
+const HUNT_GEO_CACHE = {};
+const HUNT_MAT_CACHE = {};
+function getHuntGeo(shape){
+  if(!HUNT_GEO_CACHE[shape]) HUNT_GEO_CACHE[shape] = buildBodyGeometry(shape).geo;
+  return HUNT_GEO_CACHE[shape];
+}
+function getHuntMat(color){
+  if(!HUNT_MAT_CACHE[color]) HUNT_MAT_CACHE[color] = new THREE.MeshStandardMaterial({color, emissive:color, emissiveIntensity:0.18});
+  return HUNT_MAT_CACHE[color];
+}
+
+function spawnHiddenErasers(){
+  HIDDEN_ERASERS.forEach(item=>{
+    const {scale} = buildBodyGeometry(item.shape);
+    const mesh = new THREE.Mesh(getHuntGeo(item.shape), getHuntMat(item.color));
+    mesh.scale.set(scale[0]*0.55, scale[1]*0.55, scale[2]*0.55);
+    mesh.position.set(item.pos.x, item.pos.y, item.pos.z);
+    mesh.castShadow = true;
+    mesh.userData.huntId = item.id;
+    scene.add(mesh);
+    huntMeshes.push(mesh);
+  });
+}
+spawnHiddenErasers();
+
+function hideAlreadyFoundHunts(){
+  for(let i=huntMeshes.length-1;i>=0;i--){
+    const m = huntMeshes[i];
+    if(foundErasers[m.userData.huntId]){
+      scene.remove(m);
+      huntMeshes.splice(i,1);
+    }
+  }
+}
+
+let huntSaveTimer = null;
+function collectHiddenEraser(mesh){
+  const item = HIDDEN_ERASERS.find(h=>h.id===mesh.userData.huntId);
+  scene.remove(mesh);
+  huntMeshes.splice(huntMeshes.indexOf(mesh),1);
+  foundErasers[item.id] = true;
+  userCoins += 40 + item.tier*20;
+  updateCoinUI();
+  showCoinPopup(item.name+' 발견! +'+(40+item.tier*20)+' 🪙');
+  renderHuntList();
+  clearTimeout(huntSaveTimer);
+  huntSaveTimer = setTimeout(saveFoundErasers, 800);
+}
+
+// 찾은 지우개를 장착 - 형태(shape)와 색상을 함께 바꿈 (아우라는 가챠 등급 그대로 유지)
+function applyHuntAppearance(item){
+  setShape(player, item.shape);
+  previewModels.forEach(m=>setShape(m, item.shape));
+  applyBodyMat(player.userData.bodyMat, {color:item.color, transparent:false});
+  previewModels.forEach(m=>applyBodyMat(m.userData.bodyMat, {color:item.color, transparent:false}));
+}
+
+function equipHunt(id){
+  const item = HIDDEN_ERASERS.find(h=>h.id===id);
+  if(!item || !foundErasers[id]) return;
+  equippedHuntId = id;
+  applyHuntAppearance(item);
+  saveFoundErasers();
+  renderHuntList();
+  toast(item.name+' 장착했어!');
+}
+
+async function loadFoundErasers(id){
+  await waitFirebase();
+  const dataRef = window._fb.ref('eraser3d_users/'+id);
+  const snap = await window._fb.get(dataRef);
+  const val = snap.val() || {};
+  Object.assign(foundErasers, val.foundErasers || {});
+  equippedHuntId = val.equippedHuntId || null;
+  hideAlreadyFoundHunts();
+  const item = equippedHuntId && HIDDEN_ERASERS.find(h=>h.id===equippedHuntId);
+  if(item){
+    applyHuntAppearance(item);
+  } else {
+    setShape(player, 'block');
+    previewModels.forEach(m=>setShape(m, 'block'));
+  }
+  renderHuntList();
+}
+
+async function saveFoundErasers(){
+  await waitFirebase();
+  const dataRef = window._fb.ref('eraser3d_users/'+window.CURRENT_USER);
+  await window._fb.update(dataRef, {foundErasers, equippedHuntId});
 }
 
 // ===== 맵에 흩어진 코인 (탐험 중 획득) =====
 const worldCoins = [];
 const coinGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.08, 20);
+function spawnCoinAt(x,y,z,big){
+  const mat = new THREE.MeshStandardMaterial({color: big?0xffd76f:0xffe27a, metalness:0.4, roughness:0.3});
+  const coin = new THREE.Mesh(coinGeo, mat);
+  coin.scale.setScalar(big?1.6:1);
+  coin.rotation.x = Math.PI/2;
+  coin.position.set(x,y,z);
+  coin.castShadow = true;
+  coin.userData.value = big?30:10;
+  scene.add(coin);
+  worldCoins.push(coin);
+}
 function spawnWorldCoins(count){
   for(let i=0;i<count;i++){
     const big = Math.random() < 0.15; // 15% 확률로 큰 코인
-    const mat = new THREE.MeshStandardMaterial({color: big?0xffd76f:0xffe27a, metalness:0.4, roughness:0.3});
-    const coin = new THREE.Mesh(coinGeo, mat);
-    coin.scale.setScalar(big?1.6:1);
-    coin.rotation.x = Math.PI/2;
-    coin.position.set((Math.random()-0.5)*70, 0.4, (Math.random()-0.5)*70);
-    coin.castShadow = true;
-    coin.userData.value = big?30:10;
-    scene.add(coin);
-    worldCoins.push(coin);
+    spawnCoinAt((Math.random()-0.5)*70, 0.4, (Math.random()-0.5)*70, big);
   }
 }
 spawnWorldCoins(25);
+// 플랫폼 꼭대기 보상 코인 (올라가야만 먹을 수 있음)
+spawnCoinAt(19, 4.4, 10, true);
+spawnCoinAt(19.8, 4.4, 9.3, true);
+spawnCoinAt(-19, 2.6, -19, true);
 
 let coinsSaveTimer = null;
 function collectWorldCoin(coin){
@@ -499,34 +810,76 @@ const BODY_W = 1.0;   // 너비 (기존 1.2 → 살짝 줄임)
 const BODY_H = 1.5;   // 높이 (기존 0.9 → 대폭 늘림, 길쭉하게)
 const BODY_D = 0.65;  // 두께 (기존 0.6 → 살짝 늘림)
 
+// 지우개 찾기(헌팅)로 얻는 "형태(shape)"별 몸통 지오메트리
+function buildBodyGeometry(shape){
+  switch(shape){
+    case 'round':   return {geo:new THREE.SphereGeometry(0.55,20,16),        scale:[1,1.35,1], h:1.5};
+    case 'gem':     return {geo:new THREE.IcosahedronGeometry(0.72,0),       scale:[1,1,1],    h:1.44};
+    case 'spike':   return {geo:new THREE.ConeGeometry(0.6,1.6,6),           scale:[1,1,1],    h:1.6};
+    case 'twist':   return {geo:new THREE.TorusKnotGeometry(0.38,0.15,64,10),scale:[1,1,1],    h:1.3};
+    case 'diamond': return {geo:new THREE.OctahedronGeometry(0.72,0),        scale:[1,1.15,1], h:1.5};
+    case 'tetra':   return {geo:new THREE.TetrahedronGeometry(0.78,0),       scale:[1,1,1],    h:1.3};
+    case 'dodeca':  return {geo:new THREE.DodecahedronGeometry(0.62,0),      scale:[1,1,1],    h:1.24};
+    case 'capsule': return {geo:new THREE.CylinderGeometry(0.42,0.42,1.3,16),scale:[1,1,1],    h:1.3};
+    case 'donut':   return {geo:new THREE.TorusGeometry(0.5,0.24,12,24),     scale:[1,1,1],    h:1.0};
+    default:        return {geo:new THREE.BoxGeometry(BODY_W,BODY_H,BODY_D), scale:[1,1,1],    h:BODY_H}; // 'block' (기본)
+  }
+}
+
 // 지우개 모델 생성 함수 (메인 월드 캐릭터 / 홈 화면 미리보기 둘 다 재사용)
-function buildEraserModel(){
+function buildEraserModel(shape){
+  shape = shape || 'block';
   const group = new THREE.Group();
 
   const bodyMat = new THREE.MeshStandardMaterial({color:0xff6fa5});
-  const body = new THREE.Mesh(new THREE.BoxGeometry(BODY_W, BODY_H, BODY_D), bodyMat);
-  body.position.y = BODY_H/2;
+  const {geo,scale,h} = buildBodyGeometry(shape);
+  const body = new THREE.Mesh(geo, bodyMat);
+  body.scale.set(scale[0],scale[1],scale[2]);
+  body.position.y = h/2;
   body.castShadow = true;
   group.add(body);
 
   const band = new THREE.Mesh(
-    new THREE.BoxGeometry(BODY_W+0.05, BODY_H*0.28, BODY_D+0.05),
+    new THREE.TorusGeometry(0.58, 0.07, 8, 24),
     new THREE.MeshStandardMaterial({color:0xffffff})
   );
-  band.position.y = BODY_H*0.32;
+  band.rotation.x = Math.PI/2;
+  band.position.y = h*0.32;
   group.add(band);
 
-  const eyeY = BODY_H*0.78;
+  const eyeY = h*0.78;
   function makeEye(x){
     const eye = new THREE.Mesh(new THREE.SphereGeometry(0.08,12,12), new THREE.MeshStandardMaterial({color:0x222222}));
-    eye.position.set(x, eyeY, BODY_D/2+0.01);
+    eye.position.set(x, eyeY, 0.5);
+    eye.userData.isEye = true;
     return eye;
   }
   group.add(makeEye(-0.18));
   group.add(makeEye(0.18));
 
   group.userData.bodyMat = bodyMat;
+  group.userData.bodyMesh = body;
+  group.userData.band = band;
+  group.userData.shape = shape;
+  group.userData.shapeH = h;
   return group;
+}
+
+// 이미 만들어진 캐릭터의 몸통 형태만 교체 (색/아우라는 유지)
+function setShape(group, shape){
+  shape = shape || 'block';
+  if(group.userData.shape === shape) return;
+  const {geo,scale,h} = buildBodyGeometry(shape);
+  const body = group.userData.bodyMesh;
+  body.geometry.dispose();
+  body.geometry = geo;
+  body.scale.set(scale[0],scale[1],scale[2]);
+  body.position.y = h/2;
+  group.userData.band.position.y = h*0.32;
+  const eyeY = h*0.78;
+  group.children.forEach(c=>{ if(c.userData.isEye) c.position.y = eyeY; });
+  group.userData.shape = shape;
+  group.userData.shapeH = h;
 }
 
 const player = buildEraserModel();
@@ -766,6 +1119,7 @@ function equipSkin(id){
   applySkin(skin);
   saveUserGachaData();
   renderCollectionGrid();
+  toast(skin.name+' 장착했어!');
 }
 
 function renderProbTable(){
@@ -797,6 +1151,38 @@ function renderCollectionTabs(){
     btn.textContent = cat;
     btn.addEventListener('click', ()=>{ collectionFilter = cat; renderCollectionGrid(); });
     tabs.appendChild(btn);
+  });
+}
+
+function renderHuntList(){
+  const list = document.getElementById('huntList');
+  const countEl = document.getElementById('alphabetCount');
+  const hudEl = document.getElementById('huntHudCount');
+  const foundCount = HIDDEN_ERASERS.filter(h=>foundErasers[h.id]).length;
+  if(countEl) countEl.textContent = foundCount+' / '+HIDDEN_ERASERS.length+' 발견';
+  if(hudEl) hudEl.textContent = foundCount+'/'+HIDDEN_ERASERS.length;
+  if(!list) return;
+  list.innerHTML = '';
+  TIER_META.forEach((meta,tier)=>{
+    const tierItems = HIDDEN_ERASERS.filter(h=>h.tier===tier);
+    const tierFound = tierItems.filter(h=>foundErasers[h.id]).length;
+    const header = document.createElement('div');
+    header.style.cssText = 'font-size:11px;font-weight:bold;color:#a5497a;margin:6px 2px 2px;';
+    header.textContent = meta.emoji+' '+meta.label+' — '+tierFound+'/'+tierItems.length;
+    list.appendChild(header);
+    tierItems.forEach(item=>{
+      const has = !!foundErasers[item.id];
+      const row = document.createElement('div');
+      row.className = 'huntRow'+(has?' found':' locked');
+      const equippedTag = (has && equippedHuntId===item.id) ? '<div class="hEquip">장착중</div>' : '';
+      const swatch = has ? '<div style="width:16px;height:16px;border-radius:5px;background:#'+item.color.toString(16).padStart(6,'0')+';margin-right:2px;flex:0 0 auto;"></div>' : '';
+      row.innerHTML = '<div class="hIcon">'+(has?item.emoji:'🔒')+'</div>'
+        +swatch
+        +'<div class="hInfo"><div class="hName">'+(has?item.name:'???')+'</div></div>'
+        +equippedTag;
+      if(has) row.addEventListener('click', ()=>equipHunt(item.id));
+      list.appendChild(row);
+    });
   });
 }
 
@@ -857,7 +1243,7 @@ function setPlayerName(text){
   const mat = new THREE.SpriteMaterial({map:tex, depthTest:false, transparent:true});
   nameSprite = new THREE.Sprite(mat);
   nameSprite.scale.set(1.6, 0.4, 1);
-  nameSprite.position.set(0, BODY_H+0.5, 0);
+  nameSprite.position.set(0, (player.userData.shapeH||BODY_H)+0.5, 0);
   nameSprite.renderOrder = 999;
   player.add(nameSprite);
 }
@@ -916,6 +1302,23 @@ const SPEED = 0.12;
 let grounded = true;
 let facing = 0;
 
+const PLAYER_RADIUS = 0.5;
+function groundHeightAt(x,z,y){
+  let g = 0;
+  for(const p of platforms){
+    if(x>=p.minX && x<=p.maxX && z>=p.minZ && z<=p.maxZ && y >= p.topY-0.35){
+      if(p.topY > g) g = p.topY;
+    }
+  }
+  return g;
+}
+function collidesObstacle(x,z){
+  for(const o of obstacles){
+    if(Math.hypot(x-o.x, z-o.z) < o.radius+PLAYER_RADIUS) return true;
+  }
+  return false;
+}
+
 function update(){
   let mx=0, mz=0;
   if(keys['w']||keys['arrowup']) mz -= 1;
@@ -929,8 +1332,10 @@ function update(){
   const len = Math.hypot(mx,mz);
   if(len>0.05){
     mx/=len; mz/=len;
-    player.position.x += mx*SPEED;
-    player.position.z += mz*SPEED;
+    const nx = player.position.x + mx*SPEED;
+    const nz = player.position.z + mz*SPEED;
+    if(!collidesObstacle(nx, player.position.z)) player.position.x = nx; // 바위에 막히면 그 축만 정지 (슬라이딩)
+    if(!collidesObstacle(player.position.x, nz)) player.position.z = nz;
     facing = Math.atan2(mx, mz);
     let da = facing - player.rotation.y;
     da = Math.atan2(Math.sin(da), Math.cos(da)); // -PI~PI로 정규화 (반대편으로 홱 도는 것 방지)
@@ -945,8 +1350,9 @@ function update(){
 
   velY += GRAVITY;
   player.position.y += velY;
-  if(player.position.y <= 0){
-    player.position.y = 0;
+  const gY = groundHeightAt(player.position.x, player.position.z, player.position.y);
+  if(player.position.y <= gY){
+    player.position.y = gY;
     velY = 0;
     grounded = true;
   }
@@ -964,8 +1370,21 @@ function update(){
     coin.rotation.z += 0.05;
     const dx = coin.position.x - player.position.x;
     const dz = coin.position.z - player.position.z;
-    if(Math.hypot(dx,dz) < 1.0){
+    const dy = coin.position.y - (player.position.y + 0.8);
+    if(Math.hypot(dx,dz) < 1.0 && Math.abs(dy) < 1.2){
       collectWorldCoin(coin);
+    }
+  }
+
+  // 숨겨진 지우개 회전 애니메이션 + 발견 판정
+  for(let i=huntMeshes.length-1;i>=0;i--){
+    const m = huntMeshes[i];
+    m.rotation.y += 0.03;
+    const dx = m.position.x - player.position.x;
+    const dz = m.position.z - player.position.z;
+    const dy = m.position.y - (player.position.y + 0.8);
+    if(Math.hypot(dx,dz) < 1.0 && Math.abs(dy) < 1.2){
+      collectHiddenEraser(m);
     }
   }
 }
@@ -1040,12 +1459,13 @@ function initPreview(){
 }
 
 // ===== 홈 화면 표시/네비게이션 =====
-function showHomeScreen(username){
+async function showHomeScreen(username){
   document.getElementById('homeUserName').textContent = username;
   document.getElementById('homeCharName').textContent = username+'의 지우개';
   document.getElementById('homeScreen').style.display = 'block';
   initPreview();
-  loadUserGachaData(username);
+  await loadUserGachaData(username);
+  await loadFoundErasers(username);
 }
 
 function toast(msg){
@@ -1069,7 +1489,13 @@ document.getElementById('navExplore').addEventListener('click', ()=>{
   document.getElementById('joystick').style.display = 'block';
   document.getElementById('jumpBtn').style.display = 'flex';
   document.getElementById('gameCoinHud').style.display = 'block';
+  document.getElementById('huntHud').style.display = 'block';
+  renderHuntList();
   window.startGame();
+});
+document.getElementById('huntHud').addEventListener('click', ()=>{
+  renderHuntList();
+  document.getElementById('alphabetOverlay').style.display = 'flex';
 });
 document.getElementById('navGacha').addEventListener('click', ()=>{
   resetGachaStage();
@@ -1083,14 +1509,40 @@ document.getElementById('gachaCloseBtn').addEventListener('click', ()=>{
 document.getElementById('gachaPullBtn').addEventListener('click', doGachaPull);
 
 document.getElementById('navCollection').addEventListener('click', ()=>{
-  renderCollectionGrid();
+  showSkinSlot();
   document.getElementById('collectionOverlay').style.display = 'flex';
 });
 document.getElementById('collectionCloseBtn').addEventListener('click', ()=>{
   document.getElementById('collectionOverlay').style.display = 'none';
 });
 
-document.getElementById('navMini').addEventListener('click', ()=>toast('미니게임은 준비 중이야!'));
+function showSkinSlot(){
+  document.getElementById('slotTabSkin').classList.add('active');
+  document.getElementById('slotTabWeapon').classList.remove('active');
+  document.getElementById('collectionCount').style.display = '';
+  document.getElementById('collectionTabs').style.display = '';
+  document.getElementById('collectionGrid').style.display = '';
+  document.getElementById('weaponPlaceholder').style.display = 'none';
+  renderCollectionGrid();
+}
+function showWeaponSlot(){
+  document.getElementById('slotTabWeapon').classList.add('active');
+  document.getElementById('slotTabSkin').classList.remove('active');
+  document.getElementById('collectionCount').style.display = 'none';
+  document.getElementById('collectionTabs').style.display = 'none';
+  document.getElementById('collectionGrid').style.display = 'none';
+  document.getElementById('weaponPlaceholder').style.display = 'block';
+}
+document.getElementById('slotTabSkin').addEventListener('click', showSkinSlot);
+document.getElementById('slotTabWeapon').addEventListener('click', showWeaponSlot);
+
+document.getElementById('navMini').addEventListener('click', ()=>{
+  renderHuntList();
+  document.getElementById('alphabetOverlay').style.display = 'flex';
+});
+document.getElementById('alphabetCloseBtn').addEventListener('click', ()=>{
+  document.getElementById('alphabetOverlay').style.display = 'none';
+});
 document.getElementById('navBattle').addEventListener('click', ()=>toast('전투는 준비 중이야!'));
 document.getElementById('navRace').addEventListener('click', ()=>toast('레이싱은 준비 중이야!'));
 document.getElementById('homeSettingsBtn').addEventListener('click', ()=>toast('설정은 준비 중이야!'));
