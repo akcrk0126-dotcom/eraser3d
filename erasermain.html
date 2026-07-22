@@ -1225,6 +1225,23 @@ const WEAPON_STATS = {
   shield: {name:'방패',    heal:30, rate:4000, type:'heal', color:0xdfefff},
 };
 
+// 팀 구분용 발밑 컬러 링 (빨강/파랑 팀 표시)
+function addTeamRing(group, color){
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(0.55,0.72,20),
+    new THREE.MeshBasicMaterial({color, transparent:true, opacity:0.85, side:THREE.DoubleSide})
+  );
+  ring.rotation.x = -Math.PI/2;
+  ring.position.y = 0.04;
+  group.add(ring);
+  return ring;
+}
+let myTeamRing = null;
+function setMyTeamRing(team){
+  if(myTeamRing){ player.remove(myTeamRing); myTeamRing = null; }
+  myTeamRing = addTeamRing(player, team==='red' ? 0xe04444 : 0x4478e0);
+}
+
 function buildDummyTarget(){
   const g = new THREE.Group();
   const bodyMat = new THREE.MeshStandardMaterial({color:0xc9a97a});
@@ -1508,6 +1525,7 @@ function startBotBattle(mode, mapId){
 
   const spawn = teamSpawn('red');
   player.position.set(spawn.x, 0, spawn.z);
+  setMyTeamRing('red');
   document.getElementById('myHpBadge').style.display = 'block';
   updateMyHpUI();
 
@@ -1516,12 +1534,15 @@ function startBotBattle(mode, mapId){
   for(let i=0;i<botCount;i++){
     const group = buildEraserModel();
     group.userData.bodyMat.color.setHex(0x5f7fe0);
-    const ang = (i/botCount)*Math.PI*2;
-    group.position.set(botSpawn.x+Math.cos(ang)*3, 0, botSpawn.z+Math.sin(ang)*3);
     scene.add(group);
+    const ang = (i/botCount)*Math.PI*2 + Math.random()*0.5;
+    const r = 7 + (i%3)*3; // 서로 겹치지 않게 넓게 퍼뜨림
+    group.position.set(botSpawn.x+Math.cos(ang)*r, 0, botSpawn.z+Math.sin(ang)*r);
+    addTeamRing(group, 0x4478e0);
     botTargets.push({
       group, hp:100, maxHp:100, dead:false, team:'blue',
-      home:{x:group.position.x, z:group.position.z}, wanderAng: Math.random()*Math.PI*2
+      home:{x:group.position.x, z:group.position.z}, wanderAng: Math.random()*Math.PI*2,
+      lastAttack:0
     });
   }
 
@@ -1535,16 +1556,58 @@ function startBotBattle(mode, mapId){
 
 function updateBots(){
   if(!isBotMatch) return;
+  const now = performance.now();
   botTargets.forEach(b=>{
     if(b.dead) return;
+    const distToPlayer = player.position.distanceTo(b.group.position);
+    if(distToPlayer < 14 && myHp > 0){
+      // 플레이어가 감지 범위 안이면 다가가서 공격
+      const dx = player.position.x - b.group.position.x;
+      const dz = player.position.z - b.group.position.z;
+      const dlen = Math.hypot(dx,dz) || 1;
+      if(distToPlayer > 3.2){
+        b.group.position.x += (dx/dlen)*0.02;
+        b.group.position.z += (dz/dlen)*0.02;
+      }
+      b.group.rotation.y = Math.atan2(dx,dz);
+      if(distToPlayer <= 8 && now - (b.lastAttack||0) > 1400){
+        b.lastAttack = now;
+        const dmg = 6 + Math.floor(Math.random()*6);
+        myHp = Math.max(0, myHp - dmg);
+        updateMyHpUI();
+        showDamageFlash();
+        showDamageNumber(player.position.clone().add(new THREE.Vector3(0,1.6,0)), dmg);
+        if(myHp <= 0) handleMyDeathLocal();
+      }
+      return;
+    }
     b.wanderAng += (Math.random()-0.5)*0.1;
     b.group.position.x += Math.cos(b.wanderAng)*0.015;
     b.group.position.z += Math.sin(b.wanderAng)*0.015;
     // 홈 위치에서 너무 멀어지지 않게
     const d = Math.hypot(b.group.position.x-b.home.x, b.group.position.z-b.home.z);
-    if(d > 4) b.wanderAng += Math.PI;
+    if(d > 5) b.wanderAng += Math.PI;
     b.group.rotation.y = -b.wanderAng + Math.PI/2;
   });
+}
+
+function handleMyDeathLocal(){
+  document.getElementById('deathOverlay').style.display = 'flex';
+  let secs = 3;
+  document.getElementById('respawnText').textContent = secs+'초 후 부활...';
+  const iv = setInterval(()=>{
+    secs--;
+    if(secs<=0){
+      clearInterval(iv);
+      document.getElementById('deathOverlay').style.display = 'none';
+      const spawn = teamSpawn('red');
+      player.position.set(spawn.x,0,spawn.z);
+      myHp = 100;
+      updateMyHpUI();
+    } else {
+      document.getElementById('respawnText').textContent = secs+'초 후 부활...';
+    }
+  }, 1000);
 }
 
 function damageBot(bot, dmg, hitPoint, isHeadshot, isWallbang){
@@ -1628,6 +1691,7 @@ async function startBattlePvp(matchId, match){
   myHp = 100;
   const spawn = teamSpawn(myTeam);
   player.position.set(spawn.x, 0, spawn.z);
+  setMyTeamRing(myTeam);
   document.getElementById('myHpBadge').style.display = 'block';
   updateMyHpUI();
 
@@ -1662,6 +1726,7 @@ async function startBattlePvp(matchId, match){
       if(!rp){
         const group = buildEraserModel();
         scene.add(group);
+        addTeamRing(group, pdata.team==='red' ? 0xe04444 : 0x4478e0);
         rp = remotePlayers[pid] = {group};
       }
       if(pdata.x!==undefined) rp.group.position.set(pdata.x, 0, pdata.z);
@@ -1717,6 +1782,7 @@ function stopBattlePvp(){
   clearInterval(posSyncTimer);
   Object.values(remotePlayers).forEach(rp=>scene.remove(rp.group));
   Object.keys(remotePlayers).forEach(k=>delete remotePlayers[k]);
+  if(myTeamRing){ player.remove(myTeamRing); myTeamRing = null; }
   document.getElementById('myHpBadge').style.display = 'none';
   document.getElementById('deathOverlay').style.display = 'none';
 }
@@ -3062,11 +3128,12 @@ fireBtn.addEventListener('touchend', ()=>{ clearInterval(autoFireTimer); });
 // 락 꺼짐: 캐릭터가 이동 방향을 보고, 화면을 드래그하면 카메라만 자유롭게 둘러볼 수 있음
 // 락 켜짐: 로블록스 쉬프트락처럼 캐릭터가 항상 카메라(조준점) 방향을 보고, 조이스틱은 그 방향 기준으로 이동
 let camYaw = 0;
+let camPitch = 0.15; // 위/아래 시야각 (라디안), 살짝 아래를 보는 기본값
 const _camDir = new THREE.Vector3();
 const _camRight = new THREE.Vector3();
 const _upVec = new THREE.Vector3(0,1,0);
 let shiftLock = false;
-let camDragging = false, camDragId = null, camLastX = 0;
+let camDragging = false, camDragId = null, camLastX = 0, camLastY = 0;
 const shiftLockBtn = document.getElementById('shiftLockBtn');
 const crosshair = document.getElementById('crosshair');
 
@@ -3074,20 +3141,23 @@ shiftLockBtn.addEventListener('click', ()=>{
   shiftLock = !shiftLock;
   shiftLockBtn.classList.toggle('active', shiftLock);
   shiftLockBtn.textContent = shiftLock ? '🔒' : '🔓';
-  crosshair.style.display = shiftLock ? 'block' : 'none';
 });
 
 renderer.domElement.addEventListener('touchstart', e=>{
   const t = e.changedTouches[0];
   if(t.clientX < innerWidth*0.5) return; // 왼쪽(조이스틱 쪽) 터치는 카메라 회전에서 제외
-  camDragging = true; camDragId = t.identifier; camLastX = t.clientX;
+  camDragging = true; camDragId = t.identifier; camLastX = t.clientX; camLastY = t.clientY;
 });
 addEventListener('touchmove', e=>{
   for(const t of e.changedTouches){
     if(t.identifier===camDragId){
       const dx = t.clientX - camLastX;
-      camYaw -= dx*0.008;
+      const dy = t.clientY - camLastY;
+      camYaw -= dx*0.01;
+      camPitch -= dy*0.009; // 위로 드래그하면 위를, 아래로 드래그하면 아래를 보게
+      camPitch = Math.max(-1.3, Math.min(1.2, camPitch)); // 너무 뒤로 안 넘어가게 제한
       camLastX = t.clientX;
+      camLastY = t.clientY;
     }
   }
 });
@@ -3159,8 +3229,12 @@ function update(){
 
   if(shiftLock){
     player.rotation.y = camYaw; // 쉬프트 락: 항상 카메라(조준점) 방향을 바라봄
+  } else if(!camDragging && moving){
+    // 조이스틱으로 움직이면 카메라도 그 방향으로 자연스럽게 따라 돔
+    let da = player.rotation.y - camYaw;
+    da = Math.atan2(Math.sin(da), Math.cos(da));
+    camYaw += da*0.12;
   }
-  // 쉬프트 락이 아니면 카메라는 자동으로 안 돌아가고 오직 드래그로만 움직임 (실제 로블록스와 동일)
 
   if(jumpPressed && grounded){
     velY = 0.24;
@@ -3191,20 +3265,24 @@ function update(){
     }
   }
 
-  const camDist = 7, camHeight = 4.5;
-  const camOffset = new THREE.Vector3(
-    -Math.sin(camYaw)*camDist,
-    camHeight,
-    -Math.cos(camYaw)*camDist
+  // 카메라: 조준 방향(yaw+pitch)을 실제로 바라보게 함 (예전엔 항상 캐릭터만 바라봐서 조준이 안 먹혔음)
+  const camDist = 7;
+  const aimFwd = new THREE.Vector3(
+    Math.sin(camYaw)*Math.cos(camPitch),
+    Math.sin(camPitch),
+    Math.cos(camYaw)*Math.cos(camPitch)
   );
-  const targetCamPos = player.position.clone().add(camOffset);
-  camera.position.lerp(targetCamPos, 0.1);
+  const pivot = player.position.clone().add(new THREE.Vector3(0, 1.6, 0));
+  const targetCamPos = pivot.clone().sub(aimFwd.clone().multiplyScalar(camDist));
+  targetCamPos.y = Math.max(targetCamPos.y, gY+0.3); // 바닥 뚫고 내려가지 않게
+  camera.position.lerp(targetCamPos, 0.22);
   if(camShakeAmt > 0.001){
     camera.position.x += (Math.random()-0.5)*camShakeAmt;
     camera.position.y += (Math.random()-0.5)*camShakeAmt;
     camShakeAmt *= 0.8;
   } else camShakeAmt = 0;
-  camera.lookAt(player.position.x, player.position.y+1, player.position.z);
+  const lookTarget = pivot.clone().add(aimFwd.clone().multiplyScalar(40));
+  camera.lookAt(lookTarget);
 
   updateAura(player.userData.auraGroup);
   playerShadow.position.x = player.position.x;
@@ -3376,6 +3454,7 @@ function enterExploreMode(spawnPos, zone){
   document.getElementById('loadoutBtn').style.display = inArena ? 'flex' : 'none';
   document.getElementById('fireBtn').style.display = inArena ? 'flex' : 'none';
   document.getElementById('weaponSlotBar').style.display = inArena ? 'flex' : 'none';
+  document.getElementById('crosshair').style.display = inArena ? 'block' : 'none';
 
   player.position.set(spawnPos ? spawnPos.x : 0, 0, spawnPos ? spawnPos.z : 0);
   if(inArena){ refreshWeaponVisual(); updateAmmoUI(); }
