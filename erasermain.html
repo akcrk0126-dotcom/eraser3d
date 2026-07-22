@@ -477,6 +477,11 @@ ground.rotation.x = -Math.PI/2;
 ground.receiveShadow = true;
 scene.add(ground);
 
+// 지우개 몸통 기본 치수 (지우개 찾기 스폰이 이 상수를 쓰므로 맵 코드보다 앞에 선언)
+const BODY_W = 1.0;   // 너비
+const BODY_H = 1.5;   // 높이
+const BODY_D = 0.65;  // 두께
+
 // ===== 맵: 지형 패치 / 나무 / 바위(장애물) / 계단식 플랫폼 =====
 const platforms = []; // 밟고 올라갈 수 있는 오브젝트 {minX,maxX,minZ,maxZ,topY}
 const obstacles = [];  // 부딪히면 막히는 원형 충돌체 {x,z,radius}
@@ -806,9 +811,6 @@ function showCoinPopup(text){
 
 // ===== 지우개 캐릭터 (귀여운 카툰풍) =====
 // 짜부된 느낌을 없애기 위해 세로(높이)를 늘리고, 두께도 살짝 키워 비율을 맞춤
-const BODY_W = 1.0;   // 너비 (기존 1.2 → 살짝 줄임)
-const BODY_H = 1.5;   // 높이 (기존 0.9 → 대폭 늘림, 길쭉하게)
-const BODY_D = 0.65;  // 두께 (기존 0.6 → 살짝 늘림)
 
 // 지우개 찾기(헌팅)로 얻는 "형태(shape)"별 몸통 지오메트리
 function buildBodyGeometry(shape){
