@@ -1354,6 +1354,9 @@ addEventListener('keydown', e=>{if(e.code==='Space') jumpPressed=true;});
 // 락 꺼짐: 캐릭터가 이동 방향을 보고, 화면을 드래그하면 카메라만 자유롭게 둘러볼 수 있음
 // 락 켜짐: 로블록스 쉬프트락처럼 캐릭터가 항상 카메라(조준점) 방향을 보고, 조이스틱은 그 방향 기준으로 이동
 let camYaw = 0;
+const _camDir = new THREE.Vector3();
+const _camRight = new THREE.Vector3();
+const _upVec = new THREE.Vector3(0,1,0);
 let shiftLock = false;
 let camDragging = false, camDragId = null, camLastX = 0;
 const shiftLockBtn = document.getElementById('shiftLockBtn');
@@ -1424,9 +1427,14 @@ function update(){
   const moving = len>0.05;
   if(moving){
     mx/=len; mz/=len;
-    // 로블록스처럼: 조이스틱 입력은 항상 카메라가 보는 방향 기준으로 이동함 (쉬프트 락 여부 상관없이)
-    const rmx = mx*Math.cos(camYaw) + mz*Math.sin(camYaw);
-    const rmz = -mx*Math.sin(camYaw) + mz*Math.cos(camYaw);
+    // 로블록스처럼: 조이스틱 입력은 항상 카메라가 실제로 보고 있는 방향 기준으로 이동함
+    camera.getWorldDirection(_camDir);
+    _camDir.y = 0; _camDir.normalize();
+    _camRight.crossVectors(_camDir, _upVec).normalize();
+    const fwd = -mz; // w(위로 밀기)=전진
+    const strafe = mx; // d(오른쪽)=오른쪽 이동
+    const rmx = _camDir.x*fwd + _camRight.x*strafe;
+    const rmz = _camDir.z*fwd + _camRight.z*strafe;
     mx = rmx; mz = rmz;
     const nx = player.position.x + mx*SPEED;
     const nz = player.position.z + mz*SPEED;
