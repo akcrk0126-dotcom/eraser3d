@@ -3229,12 +3229,9 @@ function update(){
 
   if(shiftLock){
     player.rotation.y = camYaw; // 쉬프트 락: 항상 카메라(조준점) 방향을 바라봄
-  } else if(!camDragging && moving){
-    // 조이스틱으로 움직이면 카메라도 그 방향으로 자연스럽게 따라 돔
-    let da = player.rotation.y - camYaw;
-    da = Math.atan2(Math.sin(da), Math.cos(da));
-    camYaw += da*0.12;
   }
+  // 카메라는 오직 드래그로만 움직임 (조이스틱 자동 추적은 카메라-이동 방향 계산과 서로 되먹임되어
+  // 화면이 제멋대로 빠르게 도는 문제가 있어서 제거함)
 
   if(jumpPressed && grounded){
     velY = 0.24;
@@ -3265,17 +3262,19 @@ function update(){
     }
   }
 
-  // 카메라: 조준 방향(yaw+pitch)을 실제로 바라보게 함 (예전엔 항상 캐릭터만 바라봐서 조준이 안 먹혔음)
-  const camDist = 7;
+  // 카메라: 아레나에서는 참고 영상(라이벌)처럼 1인칭, 탐험에서는 기존 3인칭
+  const inArenaCam = currentZone === 'arena';
+  const camDist = inArenaCam ? 0 : 7;
+  const eyeHeight = inArenaCam ? 1.55 : 1.6;
   const aimFwd = new THREE.Vector3(
     Math.sin(camYaw)*Math.cos(camPitch),
     Math.sin(camPitch),
     Math.cos(camYaw)*Math.cos(camPitch)
   );
-  const pivot = player.position.clone().add(new THREE.Vector3(0, 1.6, 0));
+  const pivot = player.position.clone().add(new THREE.Vector3(0, eyeHeight, 0));
   const targetCamPos = pivot.clone().sub(aimFwd.clone().multiplyScalar(camDist));
   targetCamPos.y = Math.max(targetCamPos.y, gY+0.3); // 바닥 뚫고 내려가지 않게
-  camera.position.lerp(targetCamPos, 0.22);
+  camera.position.lerp(targetCamPos, inArenaCam ? 0.6 : 0.22); // 1인칭은 지연 없이 즉각 반응
   if(camShakeAmt > 0.001){
     camera.position.x += (Math.random()-0.5)*camShakeAmt;
     camera.position.y += (Math.random()-0.5)*camShakeAmt;
@@ -3283,6 +3282,10 @@ function update(){
   } else camShakeAmt = 0;
   const lookTarget = pivot.clone().add(aimFwd.clone().multiplyScalar(40));
   camera.lookAt(lookTarget);
+  // 1인칭일 땐 내 몸통이 시야를 가리니 숨김 (팔/무기는 그대로 보이게)
+  if(player.userData.bodyMesh) player.userData.bodyMesh.visible = !inArenaCam;
+  if(player.userData.band) player.userData.band.visible = !inArenaCam;
+  player.children.forEach(c=>{ if(c.userData.isEye) c.visible = !inArenaCam; });
 
   updateAura(player.userData.auraGroup);
   playerShadow.position.x = player.position.x;
