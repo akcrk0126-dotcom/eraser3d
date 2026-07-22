@@ -40,6 +40,99 @@
     background:rgba(0,0,0,0.55);color:#fff;border-radius:20px;padding:9px 16px;
     font-family:'Segoe UI',sans-serif;font-size:13px;font-weight:bold;
   }
+
+  /* ═══ 아레나: 스탠드 프롬프트 / 매칭 / 맵선택 / 전투 HUD / 로드아웃 ═══ */
+  #standPrompt{
+    display:none;position:fixed;left:50%;bottom:150px;transform:translateX(-50%);z-index:16;
+    background:rgba(0,0,0,0.6);color:#fff;padding:12px 20px;border-radius:24px;
+    font-family:'Segoe UI',sans-serif;font-size:13px;font-weight:bold;text-align:center;
+    user-select:none;
+  }
+  #standPrompt .fillBar{
+    margin-top:6px;height:5px;background:rgba(255,255,255,0.3);border-radius:3px;overflow:hidden;
+  }
+  #standPrompt .fillBar i{ display:block; height:100%; width:0%; background:#ff6fa5; }
+
+  #matchmakingOverlay{
+    display:none;position:fixed;inset:0;z-index:96;background:rgba(0,0,0,0.75);
+    align-items:center;justify-content:center;flex-direction:column;color:#fff;
+    font-family:'Segoe UI',sans-serif;text-align:center;
+  }
+  #matchmakingOverlay .spinner{
+    width:44px;height:44px;border:4px solid rgba(255,255,255,0.25);border-top-color:#ff6fa5;
+    border-radius:50%;animation:mmspin 0.9s linear infinite;margin-bottom:16px;
+  }
+  @keyframes mmspin{ to{ transform:rotate(360deg); } }
+  #matchmakingOverlay .mmCancel{
+    margin-top:18px;background:rgba(255,255,255,0.15);border:none;color:#fff;
+    padding:9px 20px;border-radius:20px;font-size:13px;font-weight:bold;
+  }
+
+  #mapSelectOverlay{
+    display:none;position:fixed;inset:0;z-index:96;background:rgba(0,0,0,0.75);
+    align-items:center;justify-content:center;flex-direction:column;color:#fff;
+    font-family:'Segoe UI',sans-serif;text-align:center;
+  }
+  #mapSelectList{ display:flex; gap:12px; margin-top:16px; }
+  .mapCard{
+    width:96px;padding:14px 8px;border-radius:14px;background:rgba(255,255,255,0.12);
+    border:2px solid transparent;cursor:pointer;
+  }
+  .mapCard.picked{ border-color:#ff6fa5; background:rgba(255,111,165,0.3); }
+  .mapCard .mIcon{ font-size:28px; }
+  .mapCard .mName{ font-size:12px;font-weight:bold;margin-top:6px; }
+
+  #battleHud{
+    display:none;position:fixed;top:16px;left:0;right:0;z-index:16;
+    align-items:center;justify-content:center;gap:18px;
+    font-family:'Segoe UI',sans-serif;pointer-events:none;
+  }
+  #battleHud .scoreBadge{
+    padding:8px 16px;border-radius:14px;font-weight:bold;font-size:16px;color:#fff;min-width:40px;text-align:center;
+  }
+  #battleHud .redScore{ background:rgba(224,68,68,0.85); }
+  #battleHud .blueScore{ background:rgba(68,120,224,0.85); }
+  #battleHud .timerBadge{
+    background:rgba(0,0,0,0.55);color:#fff;padding:8px 18px;border-radius:14px;font-weight:bold;font-size:16px;
+  }
+  #pingBadge{
+    display:none;position:fixed;top:16px;right:16px;z-index:16;
+    background:rgba(0,0,0,0.55);color:#8fe08f;font-size:11px;font-weight:bold;
+    padding:6px 10px;border-radius:12px;font-family:'Segoe UI',sans-serif;
+  }
+  #myHpBadge{
+    display:none;position:fixed;left:16px;bottom:150px;z-index:16;
+    background:rgba(0,0,0,0.55);border-radius:14px;padding:8px 12px;width:140px;
+    font-family:'Segoe UI',sans-serif;
+  }
+  #myHpBadge .hpLabel{ color:#fff;font-size:11px;font-weight:bold;margin-bottom:4px; }
+  #myHpBadge .hpBarOuter{ height:8px;background:rgba(255,255,255,0.25);border-radius:5px;overflow:hidden; }
+  #myHpBadge .hpBarInner{ height:100%;width:100%;background:#7ed07e;transition:width 0.2s; }
+  #deathOverlay{
+    display:none;position:fixed;inset:0;z-index:50;background:rgba(120,0,0,0.35);
+    align-items:center;justify-content:center;flex-direction:column;color:#fff;
+    font-family:'Segoe UI',sans-serif;font-weight:bold;pointer-events:none;
+  }
+  #deathOverlay .dText{ font-size:22px;margin-bottom:8px; }
+  #deathOverlay .dSub{ font-size:13px;opacity:0.85; }
+
+  #loadoutOverlay{
+    display:none;position:fixed;inset:0;z-index:97;background:rgba(0,0,0,0.6);
+    align-items:center;justify-content:center;
+  }
+  #loadoutCard{
+    width:300px;max-height:82vh;overflow-y:auto;background:#fff;border-radius:20px;padding:20px;
+    font-family:'Segoe UI',sans-serif;
+  }
+  #loadoutCard h2{margin:0 0 12px;color:#7a5fd1;font-size:18px;text-align:center;}
+  .slotGroup{ margin-bottom:14px; }
+  .slotGroup .slotLabel{ font-size:12px;font-weight:bold;color:#888;margin-bottom:6px; }
+  .slotOptions{ display:flex; gap:8px; flex-wrap:wrap; }
+  .slotOpt{
+    flex:1 1 auto;min-width:80px;padding:10px 6px;text-align:center;border-radius:12px;
+    background:#faf7f9;border:2px solid transparent;font-size:12px;font-weight:bold;color:#555;cursor:pointer;
+  }
+  .slotOpt.picked{ border-color:#7a5fd1;background:#efe9fb;color:#7a5fd1; }
   #shiftLockBtn{
     display:none;position:fixed;right:30px;bottom:130px;width:56px;height:56px;border-radius:50%;
     background:rgba(255,255,255,0.85);border:2px solid rgba(0,0,0,0.15);
@@ -47,6 +140,33 @@
     z-index:10;user-select:none;
   }
   #shiftLockBtn.active{background:#ff6fa5;color:#fff;border-color:#ff6fa5;}
+  #loadoutBtn{
+    display:none;position:fixed;right:30px;bottom:196px;width:56px;height:56px;border-radius:50%;
+    background:rgba(255,255,255,0.85);border:2px solid rgba(0,0,0,0.15);
+    color:#555;font-size:22px;align-items:center;justify-content:center;
+    z-index:10;user-select:none;
+  }
+  #fireBtn{
+    display:none;position:fixed;right:100px;bottom:34px;width:70px;height:70px;border-radius:50%;
+    background:rgba(224,68,68,0.85);border:2px solid rgba(255,255,255,0.6);
+    color:#fff;font-size:26px;align-items:center;justify-content:center;
+    z-index:10;user-select:none;
+  }
+  #fireBtn:active{ background:rgba(180,40,40,0.95); }
+  .dummyHpBar{
+    position:fixed;width:60px;height:7px;background:rgba(0,0,0,0.4);border-radius:4px;
+    overflow:hidden;z-index:14;pointer-events:none;transform:translate(-50%,-100%);
+  }
+  .dummyHpFill{ height:100%;width:100%;background:#7ed07e;transition:width 0.15s; }
+  .dmgPop{
+    position:fixed;z-index:17;font-weight:bold;font-family:'Segoe UI',sans-serif;
+    color:#ffd23f;text-shadow:0 1px 3px rgba(0,0,0,0.7);pointer-events:none;
+    transition:transform 0.6s ease-out, opacity 0.6s ease-out;
+  }
+  #hitMarker{
+    display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+    font-size:26px;color:#ff4444;z-index:17;pointer-events:none;font-weight:bold;
+  }
   #crosshair{
     display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
     width:14px;height:14px;z-index:12;pointer-events:none;
@@ -163,6 +283,36 @@
     border-radius:20px;padding:7px 14px;font-size:13px;font-weight:bold;color:#a5497a;
     box-shadow:0 4px 12px rgba(0,0,0,0.12);
   }
+
+  #homeLevelWrap{ margin-top:4px; }
+  #homeLevelBadge{
+    display:inline-block;background:#ff6fa5;color:#fff;font-size:10px;font-weight:bold;
+    border-radius:8px;padding:1px 7px;margin-bottom:3px;
+  }
+  #homeExpBar{
+    width:120px;height:6px;background:rgba(255,255,255,0.6);border-radius:4px;overflow:hidden;
+  }
+  #homeExpFill{ height:100%;background:#ff6fa5;width:0%;transition:width 0.3s; }
+
+  #noticeBanner{
+    position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:1;
+    max-width:56%;background:rgba(0,0,0,0.4);color:#fff;font-size:11px;font-weight:bold;
+    padding:6px 14px;border-radius:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    text-align:center;
+  }
+
+  #dailyMissionCard{
+    position:absolute;top:118px;left:16px;width:180px;background:rgba(255,255,255,0.9);
+    border-radius:14px;padding:10px 12px;box-shadow:0 4px 12px rgba(0,0,0,0.12);
+  }
+  #dailyMissionCard .dmTitle{font-size:11px;font-weight:bold;color:#a5497a;margin-bottom:6px;}
+  .dmRow{display:flex;align-items:center;gap:6px;font-size:11px;color:#666;margin-bottom:4px;}
+  .dmRow .dmCheck{
+    width:15px;height:15px;border-radius:50%;border:2px solid #ddd;flex:0 0 auto;
+    display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;
+  }
+  .dmRow.done .dmCheck{background:#7ed07e;border-color:#7ed07e;}
+  .dmRow.done{color:#aaa;text-decoration:line-through;}
 
   /* ═══ 가챠 / 도감 모달 ═══ */
   .modalOverlay{
@@ -299,7 +449,50 @@
 <div id="gameCoinHud">🪙 <span id="gameCoinAmount">0</span></div>
 <div id="huntHud">🔍 <span id="huntHudCount">0/5</span></div>
 <div id="shiftLockBtn">🔓</div>
+<div id="loadoutBtn">🎒</div>
+<div id="fireBtn">🔫</div>
+<div id="hitMarker">HIT!</div>
 <div id="crosshair"></div>
+
+<div id="standPrompt">
+  꾹 눌러서 매칭 시작
+  <div class="fillBar"><i id="standFillBar"></i></div>
+</div>
+
+<div id="matchmakingOverlay">
+  <div class="spinner"></div>
+  <div id="mmText">매칭 찾는 중...</div>
+  <button class="mmCancel" id="mmCancelBtn">취소</button>
+</div>
+
+<div id="mapSelectOverlay">
+  <div>맵을 선택해줘</div>
+  <div id="mapSelectList"></div>
+</div>
+
+<div id="battleHud">
+  <div class="scoreBadge redScore" id="redScoreEl">0</div>
+  <div class="timerBadge" id="battleTimerEl">3:00</div>
+  <div class="scoreBadge blueScore" id="blueScoreEl">0</div>
+</div>
+<div id="pingBadge">📶 -- ms</div>
+<div id="myHpBadge">
+  <div class="hpLabel">❤️ <span id="myHpText">100</span></div>
+  <div class="hpBarOuter"><div class="hpBarInner" id="myHpFill"></div></div>
+</div>
+<div id="deathOverlay">
+  <div class="dText">사망!</div>
+  <div class="dSub" id="respawnText">3초 후 부활...</div>
+</div>
+
+<div id="loadoutOverlay">
+  <div id="loadoutCard">
+    <h2>🎒 로드아웃</h2>
+    <div id="loadoutSlots"></div>
+    <button class="modalCloseBtn" id="loadoutCloseBtn">닫기</button>
+  </div>
+</div>
+
 <div id="exitExploreBtn">🏠 나가기</div>
 <div id="jumpBtn">점프</div>
 
@@ -309,14 +502,25 @@
 </div>
 
 <div id="homeScreen">
+  <div id="noticeBanner">📢 공지</div>
   <div id="homeTopBar">
     <div id="homeUserBadge">
       <div class="avatar">🧽</div>
-      <div class="uname" id="homeUserName">-</div>
+      <div>
+        <div class="uname" id="homeUserName">-</div>
+        <div id="homeLevelWrap">
+          <div id="homeLevelBadge">Lv.1</div>
+          <div id="homeExpBar"><div id="homeExpFill"></div></div>
+        </div>
+      </div>
     </div>
     <div id="homeSettingsBtn">⚙️</div>
   </div>
   <div id="homeCoinBadge" style="position:absolute;top:64px;left:16px;">🪙 <span id="coinAmount">0</span></div>
+  <div id="dailyMissionCard">
+    <div class="dmTitle">📋 오늘의 미션</div>
+    <div id="dmList"></div>
+  </div>
   <div id="charViewport"></div>
   <div id="homeCharName">내 지우개</div>
   <div id="homeNav">
@@ -325,7 +529,7 @@
     <button class="navBtn" id="navCollection"><span class="ic">📖</span>도감</button>
     <button class="navBtn primary" id="navMini"><span class="ic">🔍</span>지우개 찾기</button>
     <button class="navBtn primary" id="navKingdom"><span class="ic">🏰</span>킹덤</button>
-    <button class="navBtn" id="navBattle"><span class="ic">⚔️</span>전투<span class="lock">준비중</span></button>
+    <button class="navBtn primary" id="navBattle"><span class="ic">⚔️</span>아레나</button>
     <button class="navBtn" id="navRace"><span class="ic">🏁</span>레이싱<span class="lock">준비중</span></button>
   </div>
 </div>
@@ -772,21 +976,169 @@ function buildKingdomBuilding(typeId){
 
 // 킹덤 초원에 원형으로 배치된 건설 부지 8곳
 const KINGDOM_PLOTS = [];
+const kingdomPadMeshes = [];
 for(let i=0;i<8;i++){
   const ang = (i/8)*Math.PI*2;
   const r = 15;
   const x = KINGDOM_CENTER.x + Math.cos(ang)*r;
   const z = KINGDOM_CENTER.z + Math.sin(ang)*r;
   const padMat = new THREE.MeshStandardMaterial({color:0xead9b0});
-  const pad = new THREE.Mesh(new THREE.CircleGeometry(1.4,20), padMat);
+  const pad = new THREE.Mesh(new THREE.CircleGeometry(1.8,20), padMat);
   pad.rotation.x = -Math.PI/2;
   pad.position.set(x,0.03,z);
   pad.receiveShadow = true;
+  pad.userData.plotIndex = i;
   scene.add(pad);
-  KINGDOM_PLOTS.push({index:i, x, z, buildingId:null, mesh:null});
+  kingdomPadMeshes.push(pad);
+  KINGDOM_PLOTS.push({index:i, x, z, buildingId:null, mesh:null, pad});
 }
 
 const kingdomBuildings = {}; // {plotIndex: buildingTypeId} - 로그인 후 파이어베이스에서 불러옴
+
+// ===== 아레나 (전투 로비) =====
+const ARENA_CENTER = {x:75, z:0}; // 기존 콘텐츠와 안 겹치게 멀리 배치
+addGroundPatch(ARENA_CENTER.x, ARENA_CENTER.z, 22, 0xd9c7ea);
+
+const ARENA_MODES = [
+  {id:'ffa',  name:'개인전',    sub:'(다인원)', min:4, dz:-9},
+  {id:'duel', name:'듀얼',      sub:'(1대1)',   min:2, dz:-3},
+  {id:'duo',  name:'2인큐',     sub:'(2대2)',   min:4, dz:3},
+  {id:'trio', name:'3인큐',     sub:'(3대3)',   min:6, dz:9},
+];
+function buildArenaStand(mode){
+  const g = new THREE.Group();
+  const base = new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.3,0.5,12), new THREE.MeshStandardMaterial({color:0x8a7ab8}));
+  base.position.y = 0.25; base.castShadow = true; g.add(base);
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,2.2,8), new THREE.MeshStandardMaterial({color:0x5c4f80}));
+  post.position.y = 1.6; post.castShadow = true; g.add(post);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 256; canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ff6fa5'; ctx.beginPath();
+  ctx.fillRect(0,0,256,128);
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+  ctx.font = 'bold 40px sans-serif'; ctx.fillText(mode.name, 128, 56);
+  ctx.font = 'bold 24px sans-serif'; ctx.fillText(mode.sub, 128, 92);
+  const tex = new THREE.CanvasTexture(canvas);
+  const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.2,1.1), new THREE.MeshBasicMaterial({map:tex}));
+  sign.position.y = 2.9; g.add(sign);
+  const signBack = sign.clone(); signBack.rotation.y = Math.PI; g.add(signBack);
+
+  g.position.set(ARENA_CENTER.x-9, 0, ARENA_CENTER.z+mode.dz);
+  scene.add(g);
+  return {mode, x:g.position.x, z:g.position.z};
+}
+const arenaStands = ARENA_MODES.map(buildArenaStand);
+
+// ===== 아레나 전투 맵 3종 (선택한 맵에 따라 실제로 다른 지형에서 싸움) =====
+const ARENA_MAPS = [
+  {id:'grass', name:'초원', emoji:'🌾', center:{x:75, z:45}},
+  {id:'ruins', name:'폐허', emoji:'🏚️', center:{x:115, z:0}},
+  {id:'ice',   name:'빙하', emoji:'🧊', center:{x:75, z:-45}},
+];
+ARENA_MAPS.forEach(m=>{
+  m.redSpawn = {x:m.center.x-14, z:m.center.z};
+  m.blueSpawn = {x:m.center.x+14, z:m.center.z};
+});
+
+function buildBattleMap(mapDef){
+  const c = mapDef.center;
+  if(mapDef.id === 'grass'){
+    addGroundPatch(c.x, c.z, 20, 0x8fe089);
+    for(let i=0;i<10;i++){
+      const ang = Math.random()*Math.PI*2, r = 4+Math.random()*13;
+      if(Math.random()<0.5) addTree(c.x+Math.cos(ang)*r, c.z+Math.sin(ang)*r, 0.7+Math.random()*0.5);
+      else addRock(c.x+Math.cos(ang)*r, c.z+Math.sin(ang)*r, 0.7+Math.random()*0.4);
+    }
+  } else if(mapDef.id === 'ruins'){
+    addGroundPatch(c.x, c.z, 20, 0xb0a898);
+    const pillarMat = new THREE.MeshStandardMaterial({color:0x9a9284});
+    const wallMat = new THREE.MeshStandardMaterial({color:0x8d8577});
+    // 기둥 4개
+    [[-10,-8],[10,-8],[-10,8],[10,8]].forEach(([dx,dz])=>{
+      const h = 2.5+Math.random()*1.5;
+      const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.5,0.6,h,10), pillarMat);
+      pillar.position.set(c.x+dx, h/2, c.z+dz);
+      pillar.castShadow = true;
+      scene.add(pillar);
+      obstacles.push({x:c.x+dx, z:c.z+dz, radius:0.65});
+    });
+    // 부서진 벽 조각들
+    [[0,-10,6,0.6,1.4],[0,10,6,0.6,1.2],[-13,0,0.6,7,1.6],[13,0,0.6,7,1.0]].forEach(([dx,dz,w,d,h])=>{
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), wallMat);
+      wall.position.set(c.x+dx, h/2, c.z+dz);
+      wall.castShadow = true; wall.receiveShadow = true;
+      scene.add(wall);
+    });
+    // 잔해 돌더미
+    for(let i=0;i<6;i++){
+      const ang = Math.random()*Math.PI*2, r = 3+Math.random()*10;
+      addRock(c.x+Math.cos(ang)*r, c.z+Math.sin(ang)*r, 0.5+Math.random()*0.4);
+    }
+  } else if(mapDef.id === 'ice'){
+    addGroundPatch(c.x, c.z, 20, 0xd8f2ff);
+    const iceMat = new THREE.MeshStandardMaterial({color:0xa8e4ff, transparent:true, opacity:0.75, metalness:0.2, roughness:0.1});
+    for(let i=0;i<9;i++){
+      const ang = (i/9)*Math.PI*2, r = 6+(i%3)*3.5;
+      const size = 1.2+Math.random()*1.2;
+      const block = new THREE.Mesh(new THREE.BoxGeometry(size,size*1.3,size), iceMat);
+      block.position.set(c.x+Math.cos(ang)*r, size*0.65, c.z+Math.sin(ang)*r);
+      block.rotation.y = Math.random()*Math.PI;
+      block.castShadow = true;
+      scene.add(block);
+      obstacles.push({x:block.position.x, z:block.position.z, radius:size*0.55});
+    }
+  }
+  // 팀 스폰 표시 깃발
+  function addFlag(pos, color){
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,2.2,6), new THREE.MeshStandardMaterial({color:0x999999}));
+    pole.position.set(pos.x, 1.1, pos.z);
+    scene.add(pole);
+    const flag = new THREE.Mesh(new THREE.PlaneGeometry(0.9,0.6), new THREE.MeshStandardMaterial({color, side:THREE.DoubleSide}));
+    flag.position.set(pos.x+0.45, 1.9, pos.z);
+    scene.add(flag);
+  }
+  addFlag(mapDef.redSpawn, 0xe04444);
+  addFlag(mapDef.blueSpawn, 0x4478e0);
+}
+ARENA_MAPS.forEach(buildBattleMap);
+
+// ===== 연습용 더미 타겟 (실제 대미지 테스트용) =====
+const WEAPON_STATS = {
+  ak47:   {name:'AK47',   dmg:18, rate:180,  range:45, type:'gun'},
+  burst:  {name:'점사',    dmg:12, rate:140,  range:40, type:'gun'},
+  rpg:    {name:'RPG',    dmg:80, rate:1300, range:55, type:'gun'},
+  pistol: {name:'권총',    dmg:14, rate:260,  range:32, type:'gun'},
+  exogun: {name:'엑소건',  dmg:22, rate:220,  range:38, type:'gun'},
+  fist:   {name:'주먹',    dmg:10, rate:420,  range:2.4, type:'melee'},
+  dagger: {name:'단검',    dmg:16, rate:320,  range:2.6, type:'melee'},
+};
+
+function buildDummyTarget(){
+  const g = new THREE.Group();
+  const bodyMat = new THREE.MeshStandardMaterial({color:0xc9a97a});
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.42,0.5,1.5,10), bodyMat);
+  body.position.y = 0.95; body.castShadow = true; g.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.32,14,12), bodyMat);
+  head.position.y = 1.95; head.castShadow = true; g.add(head);
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.6,6), new THREE.MeshStandardMaterial({color:0x8a5a3c}));
+  post.position.y = 0.3; g.add(post);
+  g.userData.baseY = 0;
+  return g;
+}
+
+const dummyTargets = [];
+[[-6,10],[0,12],[6,10]].forEach(([dx,dz])=>{
+  const mesh = buildDummyTarget();
+  mesh.position.set(ARENA_CENTER.x+dx, 0, ARENA_CENTER.z+dz);
+  scene.add(mesh);
+  const hpBar = document.createElement('div');
+  hpBar.className = 'dummyHpBar';
+  hpBar.innerHTML = '<div class="dummyHpFill"></div>';
+  document.body.appendChild(hpBar);
+  dummyTargets.push({mesh, hp:100, maxHp:100, dead:false, hpBar});
+});
 
 function placeKingdomBuilding(plotIndex, typeId){
   const plot = KINGDOM_PLOTS[plotIndex];
@@ -817,6 +1169,470 @@ async function saveKingdom(){
   await waitFirebase();
   const dataRef = window._fb.ref('eraser3d_users/'+window.CURRENT_USER+'/kingdomBuildings');
   await window._fb.update(dataRef, {kingdomBuildings});
+}
+
+// ===== 로드아웃 (아레나 무기 슬롯 4개) =====
+const LOADOUT_SLOTS = [
+  {key:'primary',   label:'1. 주무기',        options:[
+    {id:'ak47',   name:'AK47'},
+    {id:'burst',  name:'점사'},
+    {id:'rpg',    name:'RPG'},
+  ]},
+  {key:'secondary', label:'2. 세컨더리',      options:[
+    {id:'pistol', name:'권총'},
+    {id:'exogun', name:'엑소건'},
+  ]},
+  {key:'melee',     label:'3. 보조 & 이동기', options:[
+    {id:'fist',   name:'주먹'},
+    {id:'dagger', name:'단검'},
+  ]},
+  {key:'utility',   label:'4. 유틸',          options:[
+    {id:'c4',     name:'C4'},
+    {id:'shield', name:'방패'},
+  ]},
+];
+let loadout = {primary:'ak47', secondary:'pistol', melee:'fist', utility:'c4'};
+
+function renderLoadout(){
+  const wrap = document.getElementById('loadoutSlots');
+  if(!wrap) return;
+  wrap.innerHTML = '';
+  LOADOUT_SLOTS.forEach(slot=>{
+    const group = document.createElement('div');
+    group.className = 'slotGroup';
+    const label = document.createElement('div');
+    label.className = 'slotLabel';
+    label.textContent = slot.label;
+    group.appendChild(label);
+    const opts = document.createElement('div');
+    opts.className = 'slotOptions';
+    slot.options.forEach(opt=>{
+      const btn = document.createElement('div');
+      btn.className = 'slotOpt'+(loadout[slot.key]===opt.id?' picked':'');
+      btn.textContent = opt.name;
+      btn.addEventListener('click', ()=>{
+        loadout[slot.key] = opt.id;
+        saveLoadout();
+        renderLoadout();
+      });
+      opts.appendChild(btn);
+    });
+    group.appendChild(opts);
+    wrap.appendChild(group);
+  });
+}
+
+async function loadLoadout(id){
+  await waitFirebase();
+  const dataRef = window._fb.ref('eraser3d_users/'+id+'/loadout');
+  const snap = await window._fb.get(dataRef);
+  const val = snap.val();
+  if(val) loadout = val;
+}
+
+async function saveLoadout(){
+  await waitFirebase();
+  const dataRef = window._fb.ref('eraser3d_users/'+window.CURRENT_USER+'/loadout');
+  await window._fb.set(dataRef, loadout);
+}
+
+// ===== 아레나 매칭 시스템 =====
+let nearestStand = null;      // 지금 캐릭터 근처에 있는 스탠드 정보
+let holdTimer = null, holdStart = 0, holding = false;
+let currentMatchId = null;
+let matchListenerRef = null, mapListenerRef = null;
+let battleTickTimer = null, pingTimer = null;
+
+function checkArenaProximity(){
+  let closest = null, closestDist = 3.5; // 이 거리 안이어야 프롬프트 표시
+  arenaStands.forEach(s=>{
+    const d = Math.hypot(player.position.x-s.x, player.position.z-s.z);
+    if(d < closestDist){ closestDist = d; closest = s; }
+  });
+  nearestStand = closest;
+  const prompt = document.getElementById('standPrompt');
+  if(prompt) prompt.style.display = (closest && !currentMatchId) ? 'block' : 'none';
+}
+
+function startHold(){
+  if(!nearestStand || holding || currentMatchId) return;
+  holding = true;
+  holdStart = performance.now();
+  const fill = document.getElementById('standFillBar');
+  function tick(){
+    if(!holding) return;
+    const elapsed = performance.now() - holdStart;
+    const pct = Math.min(100, elapsed/900*100);
+    if(fill) fill.style.width = pct+'%';
+    if(elapsed >= 900){
+      holding = false;
+      if(fill) fill.style.width = '0%';
+      joinQueue(nearestStand.mode);
+      return;
+    }
+    holdTimer = requestAnimationFrame(tick);
+  }
+  tick();
+}
+function cancelHold(){
+  holding = false;
+  cancelAnimationFrame(holdTimer);
+  const fill = document.getElementById('standFillBar');
+  if(fill) fill.style.width = '0%';
+}
+document.getElementById('standPrompt').addEventListener('touchstart', e=>{ e.preventDefault(); startHold(); });
+document.getElementById('standPrompt').addEventListener('touchend', cancelHold);
+
+async function joinQueue(mode){
+  await waitFirebase();
+  document.getElementById('mmText').textContent = mode.name+' 매칭 찾는 중...';
+  document.getElementById('matchmakingOverlay').style.display = 'flex';
+  const uid = window.CURRENT_USER;
+  const queueRef = window._fb.ref('arenaQueue/'+mode.id+'/'+uid);
+  await window._fb.set(queueRef, {ts: Date.now()});
+
+  // 내 매칭 배정을 감시
+  const assignRef = window._fb.ref('arenaAssignment/'+uid);
+  matchListenerRef = assignRef;
+  window._fb.onValue(assignRef, snap=>{
+    const val = snap.val();
+    if(val && val.matchId){
+      window._fb.remove(assignRef);
+      onMatchFound(val.matchId);
+    }
+  });
+
+  // 대기열을 확인해서 인원이 충분하면 이 클라이언트가 매칭을 성사시킴 (베스트에포트, 트랜잭션 없이 단순화)
+  const snap = await window._fb.get(window._fb.ref('arenaQueue/'+mode.id));
+  const val = snap.val() || {};
+  const waitingIds = Object.keys(val).sort((a,b)=>val[a].ts-val[b].ts);
+  if(waitingIds.length >= mode.min){
+    const chosen = waitingIds.slice(0, mode.min);
+    const matchId = mode.id+'_'+Date.now();
+    const players = {};
+    chosen.forEach((pid,i)=>{ players[pid] = {team: i%2===0?'red':'blue'}; });
+    await window._fb.set(window._fb.ref('arenaMatches/'+matchId), {
+      mode: mode.id, players, state:'mapselect', selectedMap:null, scores:{red:0,blue:0}, startTime:null
+    });
+    for(const pid of chosen){
+      await window._fb.remove(window._fb.ref('arenaQueue/'+mode.id+'/'+pid));
+      await window._fb.set(window._fb.ref('arenaAssignment/'+pid), {matchId});
+    }
+  }
+
+  // 지금은 실제 유저가 잘 안 모이니, 잠깐 기다려도 매칭이 안 되면 AI 봇으로 채워서 바로 시작
+  clearTimeout(botFallbackTimer);
+  botFallbackTimer = setTimeout(async ()=>{
+    if(currentMatchId) return; // 이미 실제 매칭됨
+    await window._fb.remove(queueRef).catch(()=>{});
+    if(matchListenerRef){ await window._fb.remove(matchListenerRef).catch(()=>{}); }
+    startBotMatch(mode);
+  }, 2500);
+}
+let botFallbackTimer = null;
+
+document.getElementById('mmCancelBtn').addEventListener('click', async ()=>{
+  document.getElementById('matchmakingOverlay').style.display = 'none';
+  clearTimeout(botFallbackTimer);
+  if(!nearestStand) return;
+  await waitFirebase();
+  await window._fb.remove(window._fb.ref('arenaQueue/'+nearestStand.mode.id+'/'+window.CURRENT_USER));
+  if(matchListenerRef) window._fb.remove(matchListenerRef).catch(()=>{});
+});
+
+async function onMatchFound(matchId){
+  currentMatchId = matchId;
+  document.getElementById('matchmakingOverlay').style.display = 'none';
+  document.getElementById('standPrompt').style.display = 'none';
+  renderMapSelect();
+  document.getElementById('mapSelectOverlay').style.display = 'flex';
+
+  mapListenerRef = window._fb.ref('arenaMatches/'+matchId+'/selectedMap');
+  window._fb.onValue(mapListenerRef, snap=>{
+    const mapId = snap.val();
+    if(mapId){ onMapSelected(matchId, mapId); }
+  });
+}
+
+function renderMapSelect(botMode){
+  const list = document.getElementById('mapSelectList');
+  list.innerHTML = '';
+  ARENA_MAPS.forEach(m=>{
+    const card = document.createElement('div');
+    card.className = 'mapCard';
+    card.innerHTML = '<div class="mIcon">'+m.emoji+'</div><div class="mName">'+m.name+'</div>';
+    card.addEventListener('click', async ()=>{
+      if(botMode){
+        document.getElementById('mapSelectOverlay').style.display = 'none';
+        startBotBattle(botMode, m.id);
+        return;
+      }
+      await waitFirebase();
+      await window._fb.set(window._fb.ref('arenaMatches/'+currentMatchId+'/selectedMap'), m.id);
+    });
+    list.appendChild(card);
+  });
+}
+
+// ===== AI 봇 매칭 (실제 유저가 안 모일 때 바로 테스트할 수 있도록) =====
+let isBotMatch = false;
+const botTargets = [];
+let localScores = {red:0, blue:0};
+
+function startBotMatch(mode){
+  document.getElementById('matchmakingOverlay').style.display = 'none';
+  document.getElementById('standPrompt').style.display = 'none';
+  toast('상대가 안 모여서 AI로 매칭할게!');
+  renderMapSelect(mode);
+  document.getElementById('mapSelectOverlay').style.display = 'flex';
+}
+
+function startBotBattle(mode, mapId){
+  isBotMatch = true;
+  currentMatchId = 'BOT_'+Date.now();
+  currentMapId = mapId || 'grass';
+  myTeam = 'red';
+  myHp = 100;
+  localScores = {red:0, blue:0};
+
+  const spawn = teamSpawn('red');
+  player.position.set(spawn.x, 0, spawn.z);
+  document.getElementById('myHpBadge').style.display = 'block';
+  updateMyHpUI();
+
+  const botCount = Math.max(1, mode.min-1);
+  const botSpawn = teamSpawn('blue');
+  for(let i=0;i<botCount;i++){
+    const group = buildEraserModel();
+    group.userData.bodyMat.color.setHex(0x5f7fe0);
+    const ang = (i/botCount)*Math.PI*2;
+    group.position.set(botSpawn.x+Math.cos(ang)*3, 0, botSpawn.z+Math.sin(ang)*3);
+    scene.add(group);
+    botTargets.push({
+      group, hp:100, maxHp:100, dead:false, team:'blue',
+      home:{x:group.position.x, z:group.position.z}, wanderAng: Math.random()*Math.PI*2
+    });
+  }
+
+  document.getElementById('battleHud').style.display = 'flex';
+  document.getElementById('redScoreEl').textContent = '0';
+  document.getElementById('blueScoreEl').textContent = '0';
+  document.getElementById('pingBadge').style.display = 'block';
+  startBattleTimer(null, Date.now());
+  startPingLoop();
+}
+
+function updateBots(){
+  if(!isBotMatch) return;
+  botTargets.forEach(b=>{
+    if(b.dead) return;
+    b.wanderAng += (Math.random()-0.5)*0.1;
+    b.group.position.x += Math.cos(b.wanderAng)*0.015;
+    b.group.position.z += Math.sin(b.wanderAng)*0.015;
+    // 홈 위치에서 너무 멀어지지 않게
+    const d = Math.hypot(b.group.position.x-b.home.x, b.group.position.z-b.home.z);
+    if(d > 4) b.wanderAng += Math.PI;
+    b.group.rotation.y = -b.wanderAng + Math.PI/2;
+  });
+}
+
+function damageBot(bot, dmg, hitPoint){
+  if(bot.dead) return;
+  bot.hp = Math.max(0, bot.hp - dmg);
+  showDamageNumber(hitPoint, dmg);
+  flashHitMarker();
+  if(bot.hp <= 0){
+    bot.dead = true;
+    bot.group.visible = false;
+    localScores.red += 1;
+    document.getElementById('redScoreEl').textContent = localScores.red;
+    setTimeout(()=>{
+      bot.hp = bot.maxHp; bot.dead = false; bot.group.visible = true;
+      bot.group.position.set(bot.home.x, 0, bot.home.z);
+    }, 3000);
+  }
+}
+
+function stopBotBattle(){
+  isBotMatch = false;
+  botTargets.forEach(b=>scene.remove(b.group));
+  botTargets.length = 0;
+}
+
+async function onMapSelected(matchId, mapId){
+  if(mapListenerRef){ window._fb.off && window._fb.off(mapListenerRef); }
+  document.getElementById('mapSelectOverlay').style.display = 'none';
+
+  await waitFirebase();
+  const snap = await window._fb.get(window._fb.ref('arenaMatches/'+matchId));
+  const match = snap.val();
+  if(!match) return;
+  let startTime = match.startTime;
+  if(!startTime){
+    startTime = Date.now();
+    await window._fb.update(window._fb.ref('arenaMatches/'+matchId), {startTime, state:'battle'});
+  }
+
+  document.getElementById('battleHud').style.display = 'flex';
+  document.getElementById('pingBadge').style.display = 'block';
+  startBattleTimer(matchId, startTime);
+  startPingLoop();
+  startBattlePvp(matchId, match);
+
+  window._fb.onValue(window._fb.ref('arenaMatches/'+matchId+'/scores'), snap2=>{
+    const scores = snap2.val() || {red:0,blue:0};
+    document.getElementById('redScoreEl').textContent = scores.red;
+    document.getElementById('blueScoreEl').textContent = scores.blue;
+  });
+}
+
+// ===== 실제 유저간 PvP 동기화 (포지션 브로드캐스트 + 원격 플레이어 + 대미지/사망/부활) =====
+let myTeam = null, myHp = 100;
+let posSyncTimer = null, playersListenerRef = null;
+const remotePlayers = {}; // uid -> {group}
+
+let currentMapId = 'grass'; // 현재 선택된 전투 맵 (팀 스폰 좌표 결정)
+function teamSpawn(team){
+  const mapDef = ARENA_MAPS.find(m=>m.id===currentMapId) || ARENA_MAPS[0];
+  return team==='red' ? mapDef.redSpawn : mapDef.blueSpawn;
+}
+
+function updateMyHpUI(){
+  const hp = Math.max(0, myHp);
+  document.getElementById('myHpText').textContent = hp;
+  document.getElementById('myHpFill').style.width = hp+'%';
+}
+
+async function startBattlePvp(matchId, match){
+  const uid = window.CURRENT_USER;
+  myTeam = (match.players && match.players[uid]) ? match.players[uid].team : 'red';
+  myHp = 100;
+  const spawn = teamSpawn(myTeam);
+  player.position.set(spawn.x, 0, spawn.z);
+  document.getElementById('myHpBadge').style.display = 'block';
+  updateMyHpUI();
+
+  await window._fb.update(window._fb.ref('arenaMatches/'+matchId+'/players/'+uid), {
+    team: myTeam, hp:100, x:spawn.x, y:0, z:spawn.z, ry:0
+  });
+
+  clearInterval(posSyncTimer);
+  posSyncTimer = setInterval(()=>{
+    if(!currentMatchId) return;
+    window._fb.update(window._fb.ref('arenaMatches/'+matchId+'/players/'+uid), {
+      x: player.position.x, z: player.position.z, ry: player.rotation.y
+    }).catch(()=>{});
+  }, 150);
+
+  playersListenerRef = window._fb.ref('arenaMatches/'+matchId+'/players');
+  window._fb.onValue(playersListenerRef, snap=>{
+    const players = snap.val() || {};
+    Object.keys(players).forEach(pid=>{
+      const pdata = players[pid];
+      if(pid === uid){
+        if(typeof pdata.hp === 'number' && pdata.hp !== myHp){
+          const wasAlive = myHp > 0;
+          myHp = pdata.hp;
+          updateMyHpUI();
+          if(myHp <= 0 && wasAlive) handleMyDeath(matchId);
+        }
+        return;
+      }
+      let rp = remotePlayers[pid];
+      if(!rp){
+        const group = buildEraserModel();
+        scene.add(group);
+        rp = remotePlayers[pid] = {group};
+      }
+      if(pdata.x!==undefined) rp.group.position.set(pdata.x, 0, pdata.z);
+      if(pdata.ry!==undefined) rp.group.rotation.y = pdata.ry;
+      rp.group.visible = !(pdata.hp<=0);
+    });
+    Object.keys(remotePlayers).forEach(pid=>{
+      if(!players[pid]){ scene.remove(remotePlayers[pid].group); delete remotePlayers[pid]; }
+    });
+  });
+}
+
+async function handleMyDeath(matchId){
+  document.getElementById('deathOverlay').style.display = 'flex';
+  let secs = 3;
+  document.getElementById('respawnText').textContent = secs+'초 후 부활...';
+  const iv = setInterval(async ()=>{
+    secs--;
+    if(secs<=0){
+      clearInterval(iv);
+      document.getElementById('deathOverlay').style.display = 'none';
+      const spawn = teamSpawn(myTeam);
+      player.position.set(spawn.x,0,spawn.z);
+      myHp = 100;
+      updateMyHpUI();
+      await window._fb.update(window._fb.ref('arenaMatches/'+matchId+'/players/'+window.CURRENT_USER), {hp:100, x:spawn.x, z:spawn.z});
+    } else {
+      document.getElementById('respawnText').textContent = secs+'초 후 부활...';
+    }
+  }, 1000);
+}
+
+async function damageRemotePlayer(pid, dmg, hitPoint){
+  if(!currentMatchId) return;
+  const hpRef = window._fb.ref('arenaMatches/'+currentMatchId+'/players/'+pid+'/hp');
+  const snap = await window._fb.get(hpRef);
+  const cur = snap.val();
+  if(typeof cur !== 'number' || cur<=0) return;
+  const newHp = Math.max(0, cur-dmg);
+  await window._fb.set(hpRef, newHp);
+  showDamageNumber(hitPoint, dmg);
+  flashHitMarker();
+  if(newHp<=0){
+    const scoreRef = window._fb.ref('arenaMatches/'+currentMatchId+'/scores/'+myTeam);
+    const curScoreSnap = await window._fb.get(scoreRef);
+    const curScore = curScoreSnap.val() || 0;
+    await window._fb.set(scoreRef, curScore+1);
+  }
+}
+
+function stopBattlePvp(){
+  clearInterval(posSyncTimer);
+  Object.values(remotePlayers).forEach(rp=>scene.remove(rp.group));
+  Object.keys(remotePlayers).forEach(k=>delete remotePlayers[k]);
+  document.getElementById('myHpBadge').style.display = 'none';
+  document.getElementById('deathOverlay').style.display = 'none';
+}
+
+const MATCH_DURATION_MS = 3*60*1000; // 3분
+function startBattleTimer(matchId, startTime){
+  clearInterval(battleTickTimer);
+  battleTickTimer = setInterval(()=>{
+    const remain = Math.max(0, MATCH_DURATION_MS - (Date.now()-startTime));
+    const m = Math.floor(remain/60000), s = Math.floor((remain%60000)/1000);
+    document.getElementById('battleTimerEl').textContent = m+':'+String(s).padStart(2,'0');
+    if(remain<=0){ endBattle(); }
+  }, 500);
+}
+
+function startPingLoop(){
+  clearInterval(pingTimer);
+  pingTimer = setInterval(async ()=>{
+    if(!window._fb) return;
+    const t0 = performance.now();
+    try{ await window._fb.get(window._fb.ref('eraser3d_users/'+window.CURRENT_USER+'/coins')); }catch(e){}
+    const ms = Math.round(performance.now()-t0);
+    const el = document.getElementById('pingBadge');
+    if(el) el.textContent = '📶 '+ms+'ms';
+  }, 3000);
+}
+
+async function endBattle(){
+  clearInterval(battleTickTimer);
+  clearInterval(pingTimer);
+  stopBattlePvp();
+  stopBotBattle();
+  document.getElementById('battleHud').style.display = 'none';
+  document.getElementById('pingBadge').style.display = 'none';
+  document.getElementById('myHpBadge').style.display = 'none';
+  currentMatchId = null;
+  toast('전투 종료!');
 }
 
 function buildOnPlot(plotIndex, typeId){
@@ -964,6 +1780,8 @@ function collectHiddenEraser(mesh){
   updateCoinUI();
   showCoinPopup(item.name+' 발견! +'+(40+item.tier*20)+' 🪙');
   renderHuntList();
+  updateLevelUI();
+  completeMission('hunt');
   clearTimeout(huntSaveTimer);
   huntSaveTimer = setTimeout(saveFoundErasers, 800);
 }
@@ -1009,6 +1827,90 @@ async function saveFoundErasers(){
   const dataRef = window._fb.ref('eraser3d_users/'+window.CURRENT_USER);
   await window._fb.update(dataRef, {foundErasers, equippedHuntId});
 }
+
+// ===== 레벨/경험치 (찾은 지우개 개수 기준) =====
+function updateLevelUI(){
+  const found = Object.keys(foundErasers).length;
+  const level = Math.floor(found/5)+1;
+  const progress = (found%5)/5*100;
+  const lvEl = document.getElementById('homeLevelBadge');
+  const fillEl = document.getElementById('homeExpFill');
+  if(lvEl) lvEl.textContent = 'Lv.'+level;
+  if(fillEl) fillEl.style.width = progress+'%';
+}
+
+// ===== 공지 배너 (돌아가며 표시) =====
+const NOTICE_MESSAGES = [
+  '📢 지우개 킹덤 오픈! 성을 꾸며보자',
+  '🔍 지우개 찾기 100종 업데이트!',
+  '🎁 매일 첫 로그인 시 출석 보너스 지급',
+  '🏰 킹덤 부지를 탭해서 바로 건물을 지어보세요',
+];
+let noticeIdx = 0;
+function rotateNotice(){
+  const el = document.getElementById('noticeBanner');
+  if(el) el.textContent = NOTICE_MESSAGES[noticeIdx % NOTICE_MESSAGES.length];
+  noticeIdx++;
+}
+
+// ===== 데일리 미션 =====
+const DAILY_MISSION_DEFS = [
+  {id:'explore', label:'탐험 1회 입장하기', reward:30},
+  {id:'hunt',    label:'지우개 1개 찾기',   reward:30},
+  {id:'gacha',   label:'가챠 1회 뽑기',     reward:30},
+];
+let dailyMissions = {date:null, explore:false, hunt:false, gacha:false};
+
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+async function loadDailyMissions(id){
+  await waitFirebase();
+  const dataRef2 = window._fb.ref('eraser3d_users/'+id+'/dailyMissions');
+  const snap = await window._fb.get(dataRef2);
+  const val = snap.val() || {};
+  const today = todayStr();
+  if(val.date === today){
+    dailyMissions = val;
+  } else {
+    dailyMissions = {date:today, explore:false, hunt:false, gacha:false};
+    await window._fb.update(window._fb.ref('eraser3d_users/'+id), {dailyMissions});
+  }
+  renderDailyMissions();
+}
+
+async function saveDailyMissions(){
+  await waitFirebase();
+  const dataRef3 = window._fb.ref('eraser3d_users/'+window.CURRENT_USER);
+  await window._fb.update(dataRef3, {dailyMissions});
+}
+
+function completeMission(key){
+  if(dailyMissions.date !== todayStr() || dailyMissions[key]) return;
+  dailyMissions[key] = true;
+  const def = DAILY_MISSION_DEFS.find(d=>d.id===key);
+  userCoins += def.reward;
+  updateCoinUI();
+  showCoinPopup('+'+def.reward+' 🪙');
+  toast('미션 완료! '+def.label);
+  saveDailyMissions();
+  saveUserGachaData();
+  renderDailyMissions();
+}
+
+function renderDailyMissions(){
+  const list = document.getElementById('dmList');
+  if(!list) return;
+  list.innerHTML = '';
+  DAILY_MISSION_DEFS.forEach(def=>{
+    const done = !!dailyMissions[def.id];
+    const row = document.createElement('div');
+    row.className = 'dmRow'+(done?' done':'');
+    row.innerHTML = '<div class="dmCheck">'+(done?'✓':'')+'</div><div>'+def.label+' (+'+def.reward+')</div>';
+    list.appendChild(row);
+  });
+}
+rotateNotice();
+setInterval(rotateNotice, 4000);
 
 // ===== 맵에 흩어진 코인 (탐험 중 획득) =====
 const worldCoins = [];
@@ -1362,6 +2264,7 @@ async function doGachaPull(){
   const skin = pickWeightedSkin();
   const isNew = !userCollection[skin.id];
   userCollection[skin.id] = true;
+  completeMission('gacha');
 
   resetGachaStage();
   const dough = document.getElementById('doughBlob');
@@ -1628,6 +2531,146 @@ const jumpBtn = document.getElementById('jumpBtn');
 jumpBtn.addEventListener('touchstart', e=>{e.preventDefault(); jumpPressed=true;});
 addEventListener('keydown', e=>{if(e.code==='Space') jumpPressed=true;});
 
+// ===== 발사(슈팅) 시스템 =====
+const fireRaycaster = new THREE.Raycaster();
+const fireDir = new THREE.Vector3();
+let lastFireTime = 0;
+
+function showDamageNumber(worldPos, dmg){
+  const proj = worldPos.clone().project(camera);
+  const x = (proj.x*0.5+0.5)*innerWidth;
+  const y = (1-(proj.y*0.5+0.5))*innerHeight;
+  const el = document.createElement('div');
+  el.className = 'dmgPop';
+  el.style.left = x+'px';
+  el.style.top = y+'px';
+  el.style.fontSize = (dmg>=50 ? '26px' : dmg>=20 ? '20px' : '16px');
+  el.textContent = '-'+dmg;
+  document.body.appendChild(el);
+  requestAnimationFrame(()=>{
+    el.style.transform = 'translateY(-40px)';
+    el.style.opacity = '0';
+  });
+  setTimeout(()=>el.remove(), 620);
+}
+
+function flashHitMarker(){
+  const hm = document.getElementById('hitMarker');
+  hm.style.display = 'block';
+  clearTimeout(hm._t);
+  hm._t = setTimeout(()=>{ hm.style.display = 'none'; }, 180);
+}
+
+function respawnDummy(target){
+  target.hp = target.maxHp;
+  target.dead = false;
+  target.mesh.visible = true;
+  target.mesh.scale.set(1,1,1);
+  updateDummyHpBar(target);
+}
+
+function damageDummy(target, dmg, hitPoint){
+  if(target.dead) return;
+  target.hp = Math.max(0, target.hp - dmg);
+  showDamageNumber(hitPoint, dmg);
+  flashHitMarker();
+  updateDummyHpBar(target);
+  if(target.hp <= 0){
+    target.dead = true;
+    target.mesh.visible = false;
+    setTimeout(()=>respawnDummy(target), 3000);
+  }
+}
+
+function updateDummyHpBar(target){
+  const pct = Math.round(target.hp/target.maxHp*100);
+  const fill = target.hpBar.querySelector('.dummyHpFill');
+  if(fill) fill.style.width = pct+'%';
+}
+
+const _dummyProjVec = new THREE.Vector3();
+function updateDummyHpBarPositions(){
+  dummyTargets.forEach(t=>{
+    if(t.dead){ t.hpBar.style.display = 'none'; return; }
+    _dummyProjVec.copy(t.mesh.position);
+    _dummyProjVec.y += 2.35;
+    _dummyProjVec.project(camera);
+    if(_dummyProjVec.z > 1 || _dummyProjVec.z < -1){ t.hpBar.style.display = 'none'; return; }
+    const x = (_dummyProjVec.x*0.5+0.5)*innerWidth;
+    const y = (1-(_dummyProjVec.y*0.5+0.5))*innerHeight;
+    t.hpBar.style.left = x+'px';
+    t.hpBar.style.top = y+'px';
+    t.hpBar.style.display = 'block';
+  });
+}
+
+function attemptFire(){
+  const now = performance.now();
+  const weapon = WEAPON_STATS[loadout.primary] || WEAPON_STATS.ak47;
+  if(now - lastFireTime < weapon.rate) return;
+  lastFireTime = now;
+
+  if(weapon.type === 'melee'){
+    dummyTargets.forEach(t=>{
+      if(t.dead) return;
+      const d = player.position.distanceTo(t.mesh.position);
+      if(d <= weapon.range){
+        damageDummy(t, weapon.dmg, t.mesh.position.clone().add(new THREE.Vector3(0,1.3,0)));
+      }
+    });
+    if(currentMatchId){
+      Object.keys(remotePlayers).forEach(pid=>{
+        const rp = remotePlayers[pid];
+        if(!rp.group.visible) return;
+        const d = player.position.distanceTo(rp.group.position);
+        if(d <= weapon.range){
+          damageRemotePlayer(pid, weapon.dmg, rp.group.position.clone().add(new THREE.Vector3(0,1.3,0)));
+        }
+      });
+    }
+    if(isBotMatch){
+      botTargets.forEach(b=>{
+        if(b.dead) return;
+        const d = player.position.distanceTo(b.group.position);
+        if(d <= weapon.range){
+          damageBot(b, weapon.dmg, b.group.position.clone().add(new THREE.Vector3(0,1.3,0)));
+        }
+      });
+    }
+    return;
+  }
+
+  camera.getWorldDirection(fireDir);
+  fireRaycaster.set(camera.position, fireDir);
+  fireRaycaster.far = weapon.range;
+
+  const dummyMeshes = dummyTargets.filter(t=>!t.dead).map(t=>t.mesh);
+  const remoteMeshes = currentMatchId
+    ? Object.values(remotePlayers).filter(rp=>rp.group.visible).map(rp=>rp.group)
+    : [];
+  const botMeshes = isBotMatch
+    ? botTargets.filter(b=>!b.dead).map(b=>b.group)
+    : [];
+  const allTargets = dummyMeshes.concat(remoteMeshes).concat(botMeshes);
+  const hits = fireRaycaster.intersectObjects(allTargets, true);
+  if(hits.length === 0) return;
+
+  let hitObj = hits[0].object;
+  while(hitObj.parent && !dummyMeshes.includes(hitObj) && !remoteMeshes.includes(hitObj) && !botMeshes.includes(hitObj)) hitObj = hitObj.parent;
+
+  const dummyHit = dummyTargets.find(t=>t.mesh===hitObj);
+  if(dummyHit){ damageDummy(dummyHit, weapon.dmg, hits[0].point); return; }
+
+  const botHit = botTargets.find(b=>b.group===hitObj);
+  if(botHit){ damageBot(botHit, weapon.dmg, hits[0].point); return; }
+
+  const pid = Object.keys(remotePlayers).find(k=>remotePlayers[k].group===hitObj);
+  if(pid) damageRemotePlayer(pid, weapon.dmg, hits[0].point);
+}
+
+const fireBtn = document.getElementById('fireBtn');
+fireBtn.addEventListener('touchstart', e=>{ e.preventDefault(); attemptFire(); });
+
 // ===== 쉬프트 락 & 카메라 드래그(오빗) =====
 // 락 꺼짐: 캐릭터가 이동 방향을 보고, 화면을 드래그하면 카메라만 자유롭게 둘러볼 수 있음
 // 락 켜짐: 로블록스 쉬프트락처럼 캐릭터가 항상 카메라(조준점) 방향을 보고, 조이스틱은 그 방향 기준으로 이동
@@ -1759,6 +2802,9 @@ function update(){
   camera.lookAt(player.position.x, player.position.y+1, player.position.z);
 
   updateAura(player.userData.auraGroup);
+  checkArenaProximity();
+  updateDummyHpBarPositions();
+  updateBots();
 
   // 코인 회전 애니메이션 + 습득 판정
   for(let i=worldCoins.length-1;i>=0;i--){
@@ -1864,6 +2910,9 @@ async function showHomeScreen(username){
   await loadUserGachaData(username);
   await loadFoundErasers(username);
   await loadKingdom(username);
+  await loadLoadout(username);
+  updateLevelUI();
+  await loadDailyMissions(username);
 }
 
 function toast(msg){
@@ -1897,21 +2946,33 @@ document.addEventListener('visibilitychange', ()=>{
   }
 });
 
-function enterExploreMode(){
+function enterExploreMode(spawnPos){
   document.getElementById('homeScreen').style.display = 'none';
   document.getElementById('joystick').style.display = 'block';
   document.getElementById('jumpBtn').style.display = 'flex';
   document.getElementById('gameCoinHud').style.display = 'block';
   document.getElementById('huntHud').style.display = 'block';
   document.getElementById('shiftLockBtn').style.display = 'flex';
+  document.getElementById('loadoutBtn').style.display = 'flex';
+  document.getElementById('fireBtn').style.display = 'flex';
   document.getElementById('exitExploreBtn').style.display = 'block';
-  player.position.set(0, 0, 0);
+  player.position.set(spawnPos ? spawnPos.x : 0, 0, spawnPos ? spawnPos.z : 0);
   renderHuntList();
   window.startGame();
   requestWakeLock();
+  completeMission('explore');
 }
 
-document.getElementById('navExplore').addEventListener('click', enterExploreMode);
+document.getElementById('navExplore').addEventListener('click', ()=>enterExploreMode());
+document.getElementById('navBattle').addEventListener('click', ()=>enterExploreMode({x:ARENA_CENTER.x-4, z:ARENA_CENTER.z}));
+
+document.getElementById('loadoutBtn').addEventListener('click', ()=>{
+  renderLoadout();
+  document.getElementById('loadoutOverlay').style.display = 'flex';
+});
+document.getElementById('loadoutCloseBtn').addEventListener('click', ()=>{
+  document.getElementById('loadoutOverlay').style.display = 'none';
+});
 
 document.getElementById('exitExploreBtn').addEventListener('click', async ()=>{
   // 나가기 전에 지금 장착 중인 스킨/형태/코인/찾은 목록을 확실히 저장
@@ -1923,8 +2984,20 @@ document.getElementById('exitExploreBtn').addEventListener('click', async ()=>{
   document.getElementById('gameCoinHud').style.display = 'none';
   document.getElementById('huntHud').style.display = 'none';
   document.getElementById('shiftLockBtn').style.display = 'none';
+  document.getElementById('loadoutBtn').style.display = 'none';
+  document.getElementById('fireBtn').style.display = 'none';
   document.getElementById('exitExploreBtn').style.display = 'none';
   document.getElementById('crosshair').style.display = 'none';
+  document.getElementById('standPrompt').style.display = 'none';
+  dummyTargets.forEach(t=>{ t.hpBar.style.display = 'none'; });
+  clearInterval(battleTickTimer);
+  clearInterval(pingTimer);
+  stopBattlePvp();
+  stopBotBattle();
+  document.getElementById('battleHud').style.display = 'none';
+  document.getElementById('pingBadge').style.display = 'none';
+  document.getElementById('myHpBadge').style.display = 'none';
+  currentMatchId = null;
   document.getElementById('homeScreen').style.display = 'block';
   if(wakeLock){ try{ await wakeLock.release(); }catch(e){} wakeLock = null; }
 });
@@ -1932,13 +3005,23 @@ document.getElementById('exitExploreBtn').addEventListener('click', async ()=>{
 // ===== 킹덤 2.5D 화면 (쿠키런 킹덤 스타일, 캐릭터 조작 없음) =====
 let kingdomViewInited = false;
 let kingdomCamera, kingdomRenderer;
+let kingdomAng = 0.78; // 고정 아이소메트릭 시작 각도 (드래그로만 바뀜, 자동회전 없음)
+const KINGDOM_CAM_R = 30, KINGDOM_CAM_H = 22;
+function updateKingdomCamera(){
+  kingdomCamera.position.set(
+    KINGDOM_CENTER.x + Math.cos(kingdomAng)*KINGDOM_CAM_R,
+    KINGDOM_CAM_H,
+    KINGDOM_CENTER.z + Math.sin(kingdomAng)*KINGDOM_CAM_R
+  );
+  kingdomCamera.lookAt(KINGDOM_CENTER.x, 0, KINGDOM_CENTER.z);
+}
+
 function initKingdomView(){
   if(kingdomViewInited) return;
   kingdomViewInited = true;
   const vpEl = document.getElementById('kingdomViewport');
-  kingdomCamera = new THREE.PerspectiveCamera(45, vpEl.clientWidth/vpEl.clientHeight, 0.1, 500);
-  kingdomCamera.position.set(KINGDOM_CENTER.x+22, 20, KINGDOM_CENTER.z+22);
-  kingdomCamera.lookAt(KINGDOM_CENTER.x, 0, KINGDOM_CENTER.z);
+  kingdomCamera = new THREE.PerspectiveCamera(42, vpEl.clientWidth/vpEl.clientHeight, 0.1, 500);
+  updateKingdomCamera();
 
   kingdomRenderer = new THREE.WebGLRenderer({antialias:true});
   kingdomRenderer.setPixelRatio(Math.min(devicePixelRatio,2));
@@ -1953,14 +3036,47 @@ function initKingdomView(){
     kingdomRenderer.setSize(w,h);
   });
 
-  let ang = 0;
+  // 드래그로 좌우 회전(팬), 살짝만 움직였으면 탭으로 간주해 부지 선택
+  const raycaster = new THREE.Raycaster();
+  const ndc = new THREE.Vector2();
+  let dragId = null, dragStartX = 0, dragLastX = 0, dragMoved = 0;
+
+  kingdomRenderer.domElement.addEventListener('touchstart', e=>{
+    const t = e.changedTouches[0];
+    dragId = t.identifier; dragStartX = dragLastX = t.clientX; dragMoved = 0;
+  });
+  addEventListener('touchmove', e=>{
+    for(const t of e.changedTouches){
+      if(t.identifier===dragId){
+        const dx = t.clientX - dragLastX;
+        dragMoved += Math.abs(dx);
+        kingdomAng -= dx*0.006;
+        updateKingdomCamera();
+        dragLastX = t.clientX;
+      }
+    }
+  });
+  addEventListener('touchend', e=>{
+    for(const t of e.changedTouches){
+      if(t.identifier===dragId){
+        if(dragMoved < 8){ // 거의 안 움직였으면 탭으로 처리
+          const rect = kingdomRenderer.domElement.getBoundingClientRect();
+          ndc.x = ((t.clientX-rect.left)/rect.width)*2-1;
+          ndc.y = -((t.clientY-rect.top)/rect.height)*2+1;
+          raycaster.setFromCamera(ndc, kingdomCamera);
+          const hits = raycaster.intersectObjects(kingdomPadMeshes);
+          if(hits.length>0){
+            openBuildPicker(hits[0].object.userData.plotIndex);
+          }
+        }
+        dragId = null;
+      }
+    }
+  });
+
   function kingdomLoop(){
     requestAnimationFrame(kingdomLoop);
     if(document.getElementById('kingdomScreen').style.display !== 'block') return;
-    ang += 0.0025; // 쿠키런 킹덤처럼 아주 천천히 도는 디오라마 느낌
-    const r = 31;
-    kingdomCamera.position.set(KINGDOM_CENTER.x+Math.cos(ang)*r, 20, KINGDOM_CENTER.z+Math.sin(ang)*r);
-    kingdomCamera.lookAt(KINGDOM_CENTER.x, 0, KINGDOM_CENTER.z);
     kingdomRenderer.render(scene, kingdomCamera);
   }
   kingdomLoop();
