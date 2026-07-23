@@ -192,6 +192,51 @@
     z-index:10;user-select:none;
   }
   #reloadBtn.reloading{ background:#ffe27a; }
+  #abilityBtn{
+    display:none;position:fixed;right:100px;bottom:170px;width:60px;height:60px;border-radius:50%;
+    background:rgba(155,111,255,0.9);border:2px solid rgba(255,255,255,0.7);
+    color:#fff;font-size:22px;font-weight:bold;align-items:center;justify-content:center;
+    z-index:10;user-select:none;
+  }
+  #abilityBtn.cooling{ background:rgba(100,100,110,0.75); }
+
+  /* ═══ 브롤러 선택 카드 (브롤스타즈 스타일) ═══ */
+  #brawlerSelectGrid{
+    display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;
+    max-height:420px;overflow-y:auto;
+  }
+  .brawlerCard{
+    position:relative;border-radius:14px;overflow:hidden;aspect-ratio:1/1.05;
+    border:3px solid transparent;box-shadow:0 4px 10px rgba(0,0,0,0.25);
+    display:flex;flex-direction:column;justify-content:space-between;
+  }
+  .brawlerCard.selected{ border-color:#ffe27a; }
+  .brawlerCard .bcTop{
+    display:flex;justify-content:space-between;align-items:flex-start;padding:5px 6px;
+  }
+  .brawlerCard .bcCdBadge{
+    background:rgba(0,0,0,0.55);color:#fff;font-size:10px;font-weight:bold;
+    border-radius:10px;padding:2px 8px;
+  }
+  .brawlerCard .bcCheck{
+    background:#ffe27a;color:#333;font-size:11px;font-weight:bold;
+    border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;
+  }
+  .brawlerCard .bcPortrait{
+    flex:1;display:flex;align-items:center;justify-content:center;font-size:52px;
+    text-shadow:0 2px 6px rgba(0,0,0,0.35);
+  }
+  .brawlerCard .bcNameBar{
+    background:rgba(0,0,0,0.5);color:#fff;font-weight:bold;font-size:13px;
+    padding:6px 8px;text-align:right;
+  }
+  .brawlerCard .bcStatRow{
+    display:flex;gap:4px;padding:5px 6px;background:rgba(0,0,0,0.25);
+  }
+  .brawlerCard .bcStatIcon{
+    width:22px;height:22px;border-radius:6px;background:rgba(255,255,255,0.25);
+    display:flex;align-items:center;justify-content:center;font-size:12px;
+  }
   .dummyHpBar{
     position:fixed;width:60px;height:7px;background:rgba(0,0,0,0.4);border-radius:4px;
     overflow:hidden;z-index:14;pointer-events:none;transform:translate(-50%,-100%);
@@ -551,6 +596,7 @@
 <div id="fireBtn">🔫</div>
 <div id="ammoBadge">30 / 30</div>
 <div id="reloadBtn">🔄</div>
+<div id="abilityBtn">✨</div>
 <div id="weaponSlotBar">
   <div class="slotIconBtn active" id="slotBtn1">1<br>주무기</div>
   <div class="slotIconBtn" id="slotBtn2">2<br>세컨더리</div>
@@ -630,6 +676,7 @@
     <div id="homeSettingsBtn">⚙️</div>
   </div>
   <div id="homeCoinBadge" style="position:absolute;top:64px;left:16px;">🪙 <span id="coinAmount">0</span></div>
+  <div id="homeTrophyBadge" style="position:absolute;top:64px;right:16px;background:rgba(255,255,255,0.85);border-radius:20px;padding:7px 14px;font-size:13px;font-weight:bold;color:#a5497a;box-shadow:0 4px 12px rgba(0,0,0,0.12);font-family:'Segoe UI',sans-serif;">🏆 <span id="trophyAmount">0</span></div>
   <div id="dailyMissionCard">
     <div class="dmTitle">📋 오늘의 미션</div>
     <div id="dmList"></div>
@@ -644,6 +691,7 @@
     <button class="navBtn primary" id="navMini"><span class="ic">🔍</span>지우개 찾기</button>
     <button class="navBtn primary" id="navKingdom"><span class="ic">🏰</span>킹덤</button>
     <button class="navBtn primary" id="navBattle"><span class="ic">⚔️</span>아레나</button>
+    <button class="navBtn primary" id="navBrawlerSelect"><span class="ic">🎭</span>브롤러</button>
     <button class="navBtn" id="navRace"><span class="ic">🏁</span>레이싱<span class="lock">준비중</span></button>
   </div>
 </div>
@@ -709,6 +757,15 @@
     <div id="auraCollectionTabs" style="display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;"></div>
     <div id="auraCollectionList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;max-height:340px;overflow-y:auto;"></div>
     <button class="modalCloseBtn" id="auraCollectionCloseBtn">닫기</button>
+  </div>
+</div>
+
+<div class="modalOverlay" id="brawlerSelectOverlay">
+  <div class="modalCard">
+    <h2>🎭 브롤러 선택</h2>
+    <div style="font-size:11px;color:#999;margin-bottom:10px;">아레나에서 싸울 캐릭터야 (내 아바타랑 별개). 계속 새로운 브롤러가 추가될 예정!</div>
+    <div id="brawlerSelectGrid"></div>
+    <button class="modalCloseBtn" id="brawlerSelectCloseBtn">닫기</button>
   </div>
 </div>
 
@@ -1642,6 +1699,7 @@ function startBotBattle(mode, mapId){
   currentMapId = mapId || 'grass';
   myTeam = 'red';
   myHp = 100;
+  myKillCount = 0;
   localScores = {red:0, blue:0};
 
   const spawn = teamSpawn('red');
@@ -1650,6 +1708,7 @@ function startBotBattle(mode, mapId){
   document.getElementById('myHpBadge').style.display = 'block';
   updateMyHpUI();
 
+  const diff = botDifficultyMult();
   const botCount = Math.max(1, mode.min-1);
   const botSpawn = teamSpawn('blue');
   for(let i=0;i<botCount;i++){
@@ -1660,10 +1719,11 @@ function startBotBattle(mode, mapId){
     const r = 7 + (i%3)*3; // 서로 겹치지 않게 넓게 퍼뜨림
     group.position.set(botSpawn.x+Math.cos(ang)*r, 0, botSpawn.z+Math.sin(ang)*r);
     addTeamRing(group, 0x4478e0);
+    const hp = Math.round(100*diff.hp);
     botTargets.push({
-      group, hp:100, maxHp:100, dead:false, team:'blue',
+      group, hp, maxHp:hp, dead:false, team:'blue',
       home:{x:group.position.x, z:group.position.z}, wanderAng: Math.random()*Math.PI*2,
-      lastAttack:0
+      lastAttack:0, dmgMult: diff.dmg, speedMult: diff.speed
     });
   }
 
@@ -1678,22 +1738,25 @@ function startBotBattle(mode, mapId){
 function updateBots(){
   if(!isBotMatch) return;
   const now = performance.now();
+  const stealthed = now < stealthUntil;
   botTargets.forEach(b=>{
     if(b.dead) return;
     const distToPlayer = player.position.distanceTo(b.group.position);
-    if(distToPlayer < 14 && myHp > 0){
-      // 플레이어가 감지 범위 안이면 다가가서 공격
+    if(distToPlayer < 14 && myHp > 0 && !stealthed){
+      // 플레이어가 감지 범위 안이면 다가가서 공격 (은신 중엔 못 알아봄)
       const dx = player.position.x - b.group.position.x;
       const dz = player.position.z - b.group.position.z;
       const dlen = Math.hypot(dx,dz) || 1;
+      const spd = 0.02*(b.speedMult||1);
       if(distToPlayer > 3.2){
-        b.group.position.x += (dx/dlen)*0.02;
-        b.group.position.z += (dz/dlen)*0.02;
+        b.group.position.x += (dx/dlen)*spd;
+        b.group.position.z += (dz/dlen)*spd;
       }
       b.group.rotation.y = Math.atan2(dx,dz);
       if(distToPlayer <= 8 && now - (b.lastAttack||0) > 1400){
         b.lastAttack = now;
-        const dmg = 6 + Math.floor(Math.random()*6);
+        let dmg = Math.round((6 + Math.floor(Math.random()*6))*(b.dmgMult||1));
+        if(now < shieldUntil) dmg = Math.round(dmg*0.5); // 가디언 보호막
         myHp = Math.max(0, myHp - dmg);
         updateMyHpUI();
         showDamageFlash();
@@ -1741,6 +1804,7 @@ function damageBot(bot, dmg, hitPoint, isHeadshot, isWallbang){
     bot.dead = true;
     bot.group.visible = false;
     localScores.red += 1;
+    myKillCount++;
     document.getElementById('redScoreEl').textContent = localScores.red;
     setTimeout(()=>{
       bot.hp = bot.maxHp; bot.dead = false; bot.group.visible = true;
@@ -1882,16 +1946,18 @@ async function handleMyDeath(matchId){
 
 async function damageRemotePlayer(pid, dmg, hitPoint, isHeadshot, isWallbang){
   if(!currentMatchId) return;
-  const hpRef = window._fb.ref('arenaMatches/'+currentMatchId+'/players/'+pid+'/hp');
-  const snap = await window._fb.get(hpRef);
-  const cur = snap.val();
-  if(typeof cur !== 'number' || cur<=0) return;
-  const newHp = Math.max(0, cur-dmg);
-  await window._fb.set(hpRef, newHp);
+  const playerRef = window._fb.ref('arenaMatches/'+currentMatchId+'/players/'+pid);
+  const pSnap = await window._fb.get(playerRef);
+  const pData = pSnap.val();
+  if(!pData || typeof pData.hp !== 'number' || pData.hp<=0) return;
+  if(pData.shieldUntil && Date.now() < pData.shieldUntil) dmg = Math.round(dmg*0.5); // 상대가 가디언 보호막 중이면 피해 절반
+  const newHp = Math.max(0, pData.hp-dmg);
+  await window._fb.set(window._fb.ref('arenaMatches/'+currentMatchId+'/players/'+pid+'/hp'), newHp);
   const tag = isHeadshot ? 'head' : isWallbang ? 'wall' : null;
   showDamageNumber(hitPoint, dmg, tag);
   flashHitMarker(tag);
   if(newHp<=0){
+    myKillCount++;
     const scoreRef = window._fb.ref('arenaMatches/'+currentMatchId+'/scores/'+myTeam);
     const curScoreSnap = await window._fb.get(scoreRef);
     const curScore = curScoreSnap.val() || 0;
@@ -1935,6 +2001,26 @@ function startPingLoop(){
 async function endBattle(){
   clearInterval(battleTickTimer);
   clearInterval(pingTimer);
+
+  // 승패 판정 후 트로피 반영 (킬수에 따라 보너스, 트로피 높을수록 보상은 줄고 페널티는 늘어남)
+  let won = false;
+  if(isBotMatch){
+    won = localScores.red > localScores.blue;
+  } else if(currentMatchId){
+    try{
+      const snap = await window._fb.get(window._fb.ref('arenaMatches/'+currentMatchId+'/scores'));
+      const scores = snap.val() || {red:0,blue:0};
+      const myScore = myTeam==='red' ? scores.red : scores.blue;
+      const oppScore = myTeam==='red' ? scores.blue : scores.red;
+      won = myScore > oppScore;
+    }catch(e){}
+  }
+  const delta = calcTrophyChange(won, myKillCount);
+  userTrophies = Math.max(0, userTrophies + delta);
+  updateTrophyUI();
+  saveTrophies();
+  toast((won ? '🏆 승리! ' : '💔 패배... ') + (delta>=0?'+':'') + delta + ' 트로피 (킬 '+myKillCount+')');
+
   stopBattlePvp();
   stopBotBattle();
   document.getElementById('battleHud').style.display = 'none';
@@ -1942,7 +2028,6 @@ async function endBattle(){
   document.getElementById('myHpBadge').style.display = 'none';
   document.getElementById('teamBadge').style.display = 'none';
   currentMatchId = null;
-  toast('전투 종료!');
 }
 
 function buildOnPlot(plotIndex, typeId){
@@ -3410,6 +3495,182 @@ function showTracer(fromPos, toPos){
   setTimeout(()=>scene.remove(line), 70);
 }
 
+// ===== 브롤러 로스터 (내 자캐와 별개, 아레나 전투 전용 캐릭터들 - 계속 추가되는 메타) =====
+const BRAWLER_POOL = [
+  {id:'dasher',   name:'대시지우개',   shape:'round',  color:0x50c8ff, ability:'dash',       abilityCd:4000, desc:'앞으로 빠르게 돌진해서 순간이동하듯 거리를 벎'},
+  {id:'guardian', name:'가디언지우개', shape:'diamond',color:0xffd76f, ability:'shield',     abilityCd:8000, desc:'4초간 받는 피해 50% 감소'},
+  {id:'healer',   name:'힐지우개',     shape:'twist',  color:0x7ed07e, ability:'heal',       abilityCd:6000, desc:'즉시 체력 40 회복'},
+  {id:'bomber',   name:'폭탄지우개',   shape:'spike',  color:0xff6b4a, ability:'bomb',       abilityCd:7000, desc:'주변 반경에 폭발 범위 대미지'},
+  {id:'phantom',  name:'팬텀지우개',   shape:'gem',    color:0x9b6fff, ability:'stealth',    abilityCd:9000, desc:'2.5초간 반투명 상태(봇이 못 알아봄)'},
+  {id:'blitz',    name:'블리츠지우개', shape:'block',  color:0xff3d81, ability:'speedburst',  abilityCd:5000, desc:'2.5초간 이동속도 2배'},
+];
+let selectedBrawlerId = 'dasher';
+let userTrophies = 0;
+let myKillCount = 0;
+
+async function loadTrophies(id){
+  await waitFirebase();
+  const snap = await window._fb.get(window._fb.ref('eraser3d_users/'+id+'/trophies'));
+  userTrophies = snap.val() || 0;
+  updateTrophyUI();
+}
+async function saveTrophies(){
+  await waitFirebase();
+  await window._fb.set(window._fb.ref('eraser3d_users/'+window.CURRENT_USER+'/trophies'), userTrophies);
+}
+function updateTrophyUI(){
+  const el = document.getElementById('trophyAmount');
+  if(el) el.textContent = userTrophies;
+}
+
+// 트로피 높을수록: 승리 시 얻는 트로피/킬 보너스는 줄고, 패배 시 잃는 트로피는 늘어남 (브롤스타즈 트로피로드처럼)
+function calcTrophyChange(won, kills){
+  const baseWin = Math.max(0, 10 - Math.floor(userTrophies/150));      // 트로피 높을수록 승리 보상 감소, 결국 0
+  const killBonus = Math.max(0, 1 - Math.floor(userTrophies/400));     // 트로피 높을수록 킬 보너스도 줄어서 결국 0
+  const lossPenalty = 5 + Math.floor(userTrophies/120);                // 트로피 높을수록 패배 시 더 많이 잃음
+  if(won) return baseWin + kills*killBonus;
+  return -lossPenalty;
+}
+
+// 트로피가 높을수록 봇이 강해짐 (체력/대미지/이동속도 전부 스케일)
+function botDifficultyMult(){
+  return {
+    hp: 1 + userTrophies/400,
+    dmg: 1 + userTrophies/600,
+    speed: 1 + Math.min(1, userTrophies/1000),
+  };
+}
+
+let abilityReadyAt = 0;
+let shieldUntil = 0;
+let speedBurstUntil = 0;
+let stealthUntil = 0;
+
+function getSelectedBrawler(){
+  return BRAWLER_POOL.find(b=>b.id===selectedBrawlerId) || BRAWLER_POOL[0];
+}
+
+// 아레나 입장 시 내 캐릭터 외형을 선택한 브롤러 모습으로 임시로 덮어씀 (평소 커스텀 외형과는 별개)
+function applyBrawlerAppearance(){
+  const b = getSelectedBrawler();
+  setShape(player, b.shape);
+  applyBodyMat(player.userData.bodyMat, {color:b.color, transparent:false});
+  previewModels.forEach(m=>{ setShape(m, b.shape); applyBodyMat(m.userData.bodyMat, {color:b.color, transparent:false}); });
+}
+
+async function loadBrawlerSelection(id){
+  await waitFirebase();
+  const dataRef = window._fb.ref('eraser3d_users/'+id+'/selectedBrawlerId');
+  const snap = await window._fb.get(dataRef);
+  if(snap.val()) selectedBrawlerId = snap.val();
+}
+async function saveBrawlerSelection(){
+  await waitFirebase();
+  await window._fb.set(window._fb.ref('eraser3d_users/'+window.CURRENT_USER+'/selectedBrawlerId'), selectedBrawlerId);
+}
+
+const ABILITY_ICONS = {dash:'💨', shield:'🛡️', heal:'💚', bomb:'💣', stealth:'👻', speedburst:'⚡'};
+const SHAPE_ICONS = {round:'⚪', diamond:'🔷', twist:'🌀', spike:'🔺', gem:'💎', block:'⬛'};
+
+function renderBrawlerSelect(){
+  const grid = document.getElementById('brawlerSelectGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  BRAWLER_POOL.forEach((b, i)=>{
+    const hex = '#'+b.color.toString(16).padStart(6,'0');
+    const isSel = selectedBrawlerId === b.id;
+    const card = document.createElement('div');
+    card.className = 'brawlerCard'+(isSel?' selected':'');
+    card.style.background = 'linear-gradient(160deg, '+hex+' 0%, #222 130%)';
+    card.innerHTML =
+      '<div class="bcTop">'
+        +'<div class="bcCdBadge">'+(b.abilityCd/1000)+'s</div>'
+        +(isSel ? '<div class="bcCheck">✓</div>' : '<div></div>')
+      +'</div>'
+      +'<div class="bcPortrait">'+(ABILITY_ICONS[b.ability]||'⚔️')+'</div>'
+      +'<div class="bcStatRow">'
+        +'<div class="bcStatIcon" title="'+b.desc+'">'+(SHAPE_ICONS[b.shape]||'⬛')+'</div>'
+        +'<div class="bcStatIcon">🎯</div>'
+        +'<div class="bcStatIcon">⭐</div>'
+      +'</div>'
+      +'<div class="bcNameBar">'+b.name+'</div>';
+    card.addEventListener('click', ()=>{
+      selectedBrawlerId = b.id;
+      saveBrawlerSelection();
+      renderBrawlerSelect();
+      toast(b.name+' 선택했어!');
+    });
+    grid.appendChild(card);
+  });
+}
+
+// ===== 능력 발동 =====
+function useAbility(){
+  const now = performance.now();
+  if(now < abilityReadyAt) return;
+  const b = getSelectedBrawler();
+  abilityReadyAt = now + b.abilityCd;
+  updateAbilityCooldownUI(b);
+
+  camera.getWorldDirection(fireDir);
+  const flatDir = new THREE.Vector3(fireDir.x, 0, fireDir.z).normalize();
+
+  if(b.ability === 'dash'){
+    const nx = player.position.x + flatDir.x*5;
+    const nz = player.position.z + flatDir.z*5;
+    if(!collidesObstacle(nx, nz)){ player.position.x = nx; player.position.z = nz; }
+    toast('대시!');
+  } else if(b.ability === 'shield'){
+    shieldUntil = now + 4000;
+    toast('가디언 보호막! (4초)');
+    if(currentMatchId && !isBotMatch){
+      window._fb.update(window._fb.ref('arenaMatches/'+currentMatchId+'/players/'+window.CURRENT_USER), {shieldUntil: Date.now()+4000}).catch(()=>{});
+    }
+  } else if(b.ability === 'heal'){
+    myHp = Math.min(100, myHp+40);
+    updateMyHpUI();
+    toast('체력 +40 회복!');
+    if(currentMatchId && !isBotMatch){
+      window._fb.set(window._fb.ref('arenaMatches/'+currentMatchId+'/players/'+window.CURRENT_USER+'/hp'), myHp).catch(()=>{});
+    }
+  } else if(b.ability === 'bomb'){
+    showMuzzleFlash();
+    const radius = 4.5, dmg = 35;
+    dummyTargets.forEach(t=>{ if(!t.dead && player.position.distanceTo(t.mesh.position) < radius) damageDummy(t, dmg, t.mesh.position.clone().add(new THREE.Vector3(0,1.2,0))); });
+    if(isBotMatch) botTargets.forEach(bt=>{ if(!bt.dead && player.position.distanceTo(bt.group.position) < radius) damageBot(bt, dmg, bt.group.position.clone().add(new THREE.Vector3(0,1.2,0))); });
+    if(currentMatchId) Object.keys(remotePlayers).forEach(pid=>{
+      const rp = remotePlayers[pid];
+      if(rp.group.visible && player.position.distanceTo(rp.group.position) < radius) damageRemotePlayer(pid, dmg, rp.group.position.clone().add(new THREE.Vector3(0,1.2,0)));
+    });
+    toast('폭발!');
+  } else if(b.ability === 'stealth'){
+    stealthUntil = now + 2500;
+    if(player.userData.bodyMesh) player.userData.bodyMat.transparent = true;
+    if(player.userData.bodyMat) player.userData.bodyMat.opacity = 0.25;
+    toast('은신! (2.5초)');
+    setTimeout(()=>{
+      if(player.userData.bodyMat){ player.userData.bodyMat.opacity = 1; player.userData.bodyMat.transparent = false; }
+    }, 2500);
+  } else if(b.ability === 'speedburst'){
+    speedBurstUntil = now + 2500;
+    toast('이동속도 2배!');
+  }
+}
+
+function updateAbilityCooldownUI(b){
+  const btn = document.getElementById('abilityBtn');
+  if(!btn) return;
+  const remain = Math.max(0, abilityReadyAt - performance.now());
+  if(remain > 50){
+    btn.classList.add('cooling');
+    btn.textContent = Math.ceil(remain/1000);
+    setTimeout(()=>updateAbilityCooldownUI(b), 200);
+  } else {
+    btn.classList.remove('cooling');
+    btn.textContent = '✨';
+  }
+}
+
 let activeSlot = 'primary';
 function setActiveSlot(slot){
   activeSlot = slot;
@@ -3468,6 +3729,14 @@ function startReload(){
   }, w.reload);
 }
 document.getElementById('reloadBtn').addEventListener('touchstart', e=>{ e.preventDefault(); startReload(); });
+document.getElementById('abilityBtn').addEventListener('touchstart', e=>{ e.preventDefault(); useAbility(); });
+document.getElementById('navBrawlerSelect').addEventListener('click', ()=>{
+  renderBrawlerSelect();
+  document.getElementById('brawlerSelectOverlay').style.display = 'flex';
+});
+document.getElementById('brawlerSelectCloseBtn').addEventListener('click', ()=>{
+  document.getElementById('brawlerSelectOverlay').style.display = 'none';
+});
 
 // ===== 반동(카메라/팔 킥백) & 근접 스윙 애니메이션 상태 =====
 let recoilKick = 0;
@@ -3712,8 +3981,9 @@ function update(){
     const rmx = _camDir.x*fwd + _camRight.x*strafe;
     const rmz = _camDir.z*fwd + _camRight.z*strafe;
     mx = rmx; mz = rmz;
-    const nx = player.position.x + mx*SPEED;
-    const nz = player.position.z + mz*SPEED;
+    const speedMult = (performance.now() < speedBurstUntil) ? 2 : 1;
+    const nx = player.position.x + mx*SPEED*speedMult;
+    const nz = player.position.z + mz*SPEED*speedMult;
     if(!collidesObstacle(nx, player.position.z)) player.position.x = nx; // 바위에 막히면 그 축만 정지 (슬라이딩)
     if(!collidesObstacle(player.position.x, nz)) player.position.z = nz;
     if(!shiftLock){
@@ -3913,6 +4183,8 @@ async function showHomeScreen(username){
   await loadAuraData(username);
   await loadKingdom(username);
   await loadLoadout(username);
+  await loadBrawlerSelection(username);
+  await loadTrophies(username);
   updateLevelUI();
   await loadDailyMissions(username);
 }
@@ -3968,9 +4240,20 @@ function enterExploreMode(spawnPos, zone){
   document.getElementById('fireBtn').style.display = inArena ? 'flex' : 'none';
   document.getElementById('weaponSlotBar').style.display = inArena ? 'flex' : 'none';
   document.getElementById('crosshair').style.display = inArena ? 'block' : 'none';
+  document.getElementById('abilityBtn').style.display = inArena ? 'flex' : 'none';
 
   player.position.set(spawnPos ? spawnPos.x : 0, 0, spawnPos ? spawnPos.z : 0);
-  if(inArena){ refreshWeaponVisual(); updateAmmoUI(); }
+  if(inArena){
+    refreshWeaponVisual(); updateAmmoUI();
+    applyBrawlerAppearance(); // 아레나에서는 내 아바타 대신 선택한 브롤러 모습으로
+    abilityReadyAt = 0;
+    updateAbilityCooldownUI(getSelectedBrawler());
+  } else if(currentSkin){
+    // 아레나에서 나오면 원래 커스텀 외형(스킨+찾은 지우개 형태)으로 복귀
+    applySkin(currentSkin);
+    const item = equippedHuntId && HIDDEN_ERASERS.find(h=>h.id===equippedHuntId);
+    if(item) applyHuntAppearance(item);
+  }
   renderHuntList();
   window.startGame();
   requestWakeLock();
@@ -4016,6 +4299,7 @@ document.getElementById('exitExploreBtn').addEventListener('click', async ()=>{
   document.getElementById('weaponSlotBar').style.display = 'none';
   document.getElementById('ammoBadge').style.display = 'none';
   document.getElementById('reloadBtn').style.display = 'none';
+  document.getElementById('abilityBtn').style.display = 'none';
   clearInterval(autoFireTimer);
   document.getElementById('exitExploreBtn').style.display = 'none';
   document.getElementById('crosshair').style.display = 'none';
@@ -4207,7 +4491,6 @@ document.getElementById('navMini').addEventListener('click', ()=>{
 document.getElementById('alphabetCloseBtn').addEventListener('click', ()=>{
   document.getElementById('alphabetOverlay').style.display = 'none';
 });
-document.getElementById('navBattle').addEventListener('click', ()=>toast('전투는 준비 중이야!'));
 document.getElementById('navRace').addEventListener('click', ()=>toast('레이싱은 준비 중이야!'));
 document.getElementById('homeSettingsBtn').addEventListener('click', ()=>toast('설정은 준비 중이야!'));
 
