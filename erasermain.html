@@ -103,11 +103,18 @@
   #myHpBadge{
     display:none;position:fixed;left:16px;bottom:150px;z-index:16;
     background:rgba(0,0,0,0.55);border-radius:14px;padding:8px 12px;width:140px;
-    font-family:'Segoe UI',sans-serif;
+    font-family:'Segoe UI',sans-serif;border:2px solid transparent;
   }
   #myHpBadge .hpLabel{ color:#fff;font-size:11px;font-weight:bold;margin-bottom:4px; }
   #myHpBadge .hpBarOuter{ height:8px;background:rgba(255,255,255,0.25);border-radius:5px;overflow:hidden; }
   #myHpBadge .hpBarInner{ height:100%;width:100%;background:#7ed07e;transition:width 0.2s; }
+  #teamBadge{
+    display:none;position:fixed;left:16px;bottom:186px;z-index:16;
+    padding:6px 14px;border-radius:12px;font-family:'Segoe UI',sans-serif;
+    font-weight:bold;font-size:12px;color:#fff;
+  }
+  #teamBadge.red{ background:rgba(224,68,68,0.9); }
+  #teamBadge.blue{ background:rgba(68,120,224,0.9); }
   #deathOverlay{
     display:none;position:fixed;inset:0;z-index:50;background:rgba(120,0,0,0.35);
     align-items:center;justify-content:center;flex-direction:column;color:#fff;
@@ -378,6 +385,10 @@
   }
   #gachaResult .swatch{width:54px;height:54px;border-radius:14px;margin-bottom:8px;box-shadow:0 4px 10px rgba(0,0,0,0.15);}
   #gachaResult .rname{font-weight:bold;font-size:14px;color:#444;}
+  #gachaResult2{
+    min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:#f8f4ff;border-radius:14px;margin-bottom:12px;padding:14px;position:relative;
+  }
   #gachaResult .rrarity{font-size:11px;color:#999;margin-top:2px;}
   .modalCloseBtn{
     width:100%;padding:11px;border:none;border-radius:12px;background:#f2f2f2;color:#555;
@@ -452,6 +463,50 @@
   }
 
   /* ═══ 가챠 스탬프(틀 찍기) 컷씬 ═══ */
+  #skinReelWrap{
+    display:none;width:100%;height:110px;overflow:hidden;border-radius:12px;
+    background:radial-gradient(circle, #fff6fa 0%, #ffe0ec 100%);margin-bottom:6px;
+    align-items:center;justify-content:center;flex-direction:column;position:relative;
+  }
+  #skinReelWrap.active{ display:flex; }
+  #reelStar{
+    width:66px;height:66px;
+    filter:drop-shadow(0 0 6px rgba(255,180,210,0.8)) drop-shadow(0 0 14px rgba(255,215,110,0.6));
+  }
+  #reelStar.spinning{ animation:reelSpin 1.1s linear infinite; }
+  @keyframes reelSpin{ from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+  #crackCanvas{
+    position:absolute;inset:0;width:100%;height:100%;pointer-events:none;
+  }
+  #reelFlash{
+    position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;
+  }
+  #reelFlash.pop{ animation:reelFlashPop 0.35s ease-out; }
+  #reelFlash.shatter{ animation:reelShatter 0.5s ease-out; }
+  @keyframes reelShatter{
+    0%{opacity:0;} 12%{opacity:1;} 26%{opacity:0.25;} 40%{opacity:1;}
+    60%{opacity:0.3;} 78%{opacity:0.9;} 100%{opacity:0;}
+  }
+  #reelStar.trembling{ animation:reelTremble 0.4s ease-in-out; }
+  @keyframes reelTremble{
+    0%,100%{transform:translate(0,0) rotate(0deg);}
+    20%{transform:translate(-3px,2px) rotate(-4deg);}
+    40%{transform:translate(3px,-2px) rotate(4deg);}
+    60%{transform:translate(-2px,-3px) rotate(-3deg);}
+    80%{transform:translate(2px,3px) rotate(3deg);}
+  }
+  #reelFog{
+    position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 0.4s;
+    background:radial-gradient(circle, transparent 35%, rgba(255,255,255,0.9) 100%);
+  }
+  #reelFog.show{ opacity:1; }
+  @keyframes reelFlashPop{ 0%{opacity:0;} 25%{opacity:0.9;} 100%{opacity:0;} }
+  #reelTitle{
+    display:none;text-align:center;
+  }
+  #reelTitle .rtName{ font-size:17px;font-weight:bold;color:#444; }
+  #reelTitle .rtRarity{ font-size:12px;color:#a5497a;font-weight:bold;margin-top:2px; }
+  #reelTitle .rtOdds{ font-size:11px;color:#999;margin-top:4px; }
   #stampStage{
     position:relative;width:100%;height:78px;display:flex;align-items:flex-end;justify-content:center;
     margin-bottom:6px;
@@ -528,6 +583,7 @@
   <div class="scoreBadge blueScore" id="blueScoreEl">0</div>
 </div>
 <div id="pingBadge">📶 -- ms</div>
+<div id="teamBadge">🔴 RED팀</div>
 <div id="myHpBadge">
   <div class="hpLabel">❤️ <span id="myHpText">100</span></div>
   <div class="hpBarOuter"><div class="hpBarInner" id="myHpFill"></div></div>
@@ -583,6 +639,7 @@
   <div id="homeNav">
     <button class="navBtn primary" id="navExplore"><span class="ic">🗺️</span>탐험</button>
     <button class="navBtn primary" id="navGacha"><span class="ic">🎁</span>가챠</button>
+    <button class="navBtn primary" id="navAuraGacha"><span class="ic">🌟</span>아우라</button>
     <button class="navBtn" id="navCollection"><span class="ic">📖</span>도감</button>
     <button class="navBtn primary" id="navMini"><span class="ic">🔍</span>지우개 찾기</button>
     <button class="navBtn primary" id="navKingdom"><span class="ic">🏰</span>킹덤</button>
@@ -615,6 +672,44 @@
     <div id="kingdomExitBtn">🏠 나가기</div>
   </div>
   <button id="kingdomBuildBtn">🏰 건설하기</button>
+</div>
+
+<div class="modalOverlay" id="auraGachaOverlay">
+  <div class="modalCard">
+    <h2>🌟 아우라 뽑기</h2>
+    <div class="modalCoin">보유 코인: 🪙 <span id="auraGachaCoinAmount">0</span></div>
+    <div id="gachaResult2">
+      <div id="skinReelWrap">
+        <svg id="reelStar" viewBox="-70 -70 140 140" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="0,-65 8,-8 65,0 8,8 0,65 -8,8 -65,0 -8,-8" fill="#fff" />
+          <polygon points="0,-38 5,-5 38,0 5,5 0,38 -5,5 -38,0 -5,-5" fill="#ffd76f" opacity="0.85" transform="rotate(45)" />
+        </svg>
+        <canvas id="crackCanvas"></canvas>
+        <div id="reelTitle">
+          <div class="rtName" id="reelTitleName"></div>
+          <div class="rtRarity" id="reelTitleRarity"></div>
+          <div class="rtOdds" id="reelTitleOdds"></div>
+        </div>
+        <div id="reelFog"></div>
+        <div id="reelFlash"></div>
+      </div>
+      <div class="rname" id="auraIdleMsg" style="color:#bbb;">뽑기를 눌러봐!</div>
+    </div>
+    <button id="auraGachaPullBtn">뽑기 (150 🪙)</button>
+    <button class="modalCloseBtn" id="auraCollectionBtn" style="margin-bottom:10px;background:#efe9fb;color:#7a5fd1;">📖 아우라 도감</button>
+    <div id="auraProbTable"></div>
+    <button class="modalCloseBtn" id="auraGachaCloseBtn">닫기</button>
+  </div>
+</div>
+
+<div class="modalOverlay" id="auraCollectionOverlay">
+  <div class="modalCard">
+    <h2>🌟 아우라 도감</h2>
+    <div class="modalCoin" id="auraCollectionCount">0 / 70 수집</div>
+    <div id="auraCollectionTabs" style="display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;"></div>
+    <div id="auraCollectionList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;max-height:340px;overflow-y:auto;"></div>
+    <button class="modalCloseBtn" id="auraCollectionCloseBtn">닫기</button>
+  </div>
 </div>
 
 <div class="modalOverlay" id="kingdomOverlay">
@@ -1150,6 +1245,14 @@ ARENA_MAPS.forEach(m=>{
   m.blueSpawn = {x:m.center.x+14, z:m.center.z};
 });
 
+function addCoverWall(x,z,w,d,h,color,target){
+  const wall = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), new THREE.MeshStandardMaterial({color}));
+  wall.position.set(x, h/2, z);
+  wall.castShadow = true; wall.receiveShadow = true;
+  target.add(wall);
+  obstacles.push({x, z, radius: Math.max(w,d)/2*0.9});
+}
+
 function buildBattleMap(mapDef){
   const c = mapDef.center;
   if(mapDef.id === 'grass'){
@@ -1159,10 +1262,15 @@ function buildBattleMap(mapDef){
       if(Math.random()<0.5) addTree(c.x+Math.cos(ang)*r, c.z+Math.sin(ang)*r, 0.7+Math.random()*0.5, arenaZoneGroup);
       else addRock(c.x+Math.cos(ang)*r, c.z+Math.sin(ang)*r, 0.7+Math.random()*0.4, arenaZoneGroup);
     }
+    // 나무 울타리/돌담 엄폐물 (좌우 대칭으로 배치해서 양 팀 다 쓸 수 있게)
+    const fenceMat = 0x9a7a4f;
+    [[-6,-3,3,0.5,1.3],[6,3,3,0.5,1.3],[-3,6,0.5,3,1.3],[3,-6,0.5,3,1.3],
+     [0,0,4,0.5,1.1],[-9,0,0.5,4,1.1],[9,0,0.5,4,1.1]].forEach(([dx,dz,w,d,h])=>{
+      addCoverWall(c.x+dx, c.z+dz, w, d, h, fenceMat, arenaZoneGroup);
+    });
   } else if(mapDef.id === 'ruins'){
     addGroundPatch(c.x, c.z, 20, 0xb0a898, arenaZoneGroup);
     const pillarMat = new THREE.MeshStandardMaterial({color:0x9a9284});
-    const wallMat = new THREE.MeshStandardMaterial({color:0x8d8577});
     // 기둥 4개
     [[-10,-8],[10,-8],[-10,8],[10,8]].forEach(([dx,dz])=>{
       const h = 2.5+Math.random()*1.5;
@@ -1172,12 +1280,10 @@ function buildBattleMap(mapDef){
       arenaZoneGroup.add(pillar);
       obstacles.push({x:c.x+dx, z:c.z+dz, radius:0.65});
     });
-    // 부서진 벽 조각들
-    [[0,-10,6,0.6,1.4],[0,10,6,0.6,1.2],[-13,0,0.6,7,1.6],[13,0,0.6,7,1.0]].forEach(([dx,dz,w,d,h])=>{
-      const wall = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), wallMat);
-      wall.position.set(c.x+dx, h/2, c.z+dz);
-      wall.castShadow = true; wall.receiveShadow = true;
-      arenaZoneGroup.add(wall);
+    // 부서진 벽 조각들 (외곽 + 중앙 엄폐 벽 추가)
+    [[0,-10,6,0.6,1.4],[0,10,6,0.6,1.2],[-13,0,0.6,7,1.6],[13,0,0.6,7,1.0],
+     [-4,0,0.6,5,1.3],[4,0,0.6,5,1.3],[0,4,5,0.6,1.1],[0,-4,5,0.6,1.1]].forEach(([dx,dz,w,d,h])=>{
+      addCoverWall(c.x+dx, c.z+dz, w, d, h, 0x8d8577, arenaZoneGroup);
     });
     // 잔해 돌더미
     for(let i=0;i<6;i++){
@@ -1197,6 +1303,15 @@ function buildBattleMap(mapDef){
       arenaZoneGroup.add(block);
       obstacles.push({x:block.position.x, z:block.position.z, radius:size*0.55});
     }
+    // 얼음 벽(슬랩) 엄폐물 - 넓적한 판 형태로 큐브들과 다른 실루엣
+    const iceWallMat = new THREE.MeshStandardMaterial({color:0xbfeaff, transparent:true, opacity:0.7, metalness:0.15, roughness:0.15});
+    [[-5,-2,4,0.6,1.6],[5,2,4,0.6,1.6],[0,7,5,0.6,1.4],[0,-7,5,0.6,1.4]].forEach(([dx,dz,w,d,h])=>{
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), iceWallMat);
+      wall.position.set(c.x+dx, h/2, c.z+dz);
+      wall.castShadow = true;
+      arenaZoneGroup.add(wall);
+      obstacles.push({x:c.x+dx, z:c.z+dz, radius:Math.max(w,d)/2*0.9});
+    });
   }
   // 팀 스폰 표시 깃발
   function addFlag(pos, color){
@@ -1240,6 +1355,12 @@ let myTeamRing = null;
 function setMyTeamRing(team){
   if(myTeamRing){ player.remove(myTeamRing); myTeamRing = null; }
   myTeamRing = addTeamRing(player, team==='red' ? 0xe04444 : 0x4478e0);
+  const badge = document.getElementById('teamBadge');
+  const hpBadge = document.getElementById('myHpBadge');
+  badge.style.display = 'block';
+  badge.className = team; // 'red' or 'blue'
+  badge.textContent = (team==='red' ? '🔴 RED팀' : '🔵 BLUE팀');
+  hpBadge.style.borderColor = team==='red' ? '#e04444' : '#4478e0';
 }
 
 function buildDummyTarget(){
@@ -1784,6 +1905,7 @@ function stopBattlePvp(){
   Object.keys(remotePlayers).forEach(k=>delete remotePlayers[k]);
   if(myTeamRing){ player.remove(myTeamRing); myTeamRing = null; }
   document.getElementById('myHpBadge').style.display = 'none';
+  document.getElementById('teamBadge').style.display = 'none';
   document.getElementById('deathOverlay').style.display = 'none';
 }
 
@@ -1818,6 +1940,7 @@ async function endBattle(){
   document.getElementById('battleHud').style.display = 'none';
   document.getElementById('pingBadge').style.display = 'none';
   document.getElementById('myHpBadge').style.display = 'none';
+  document.getElementById('teamBadge').style.display = 'none';
   currentMatchId = null;
   toast('전투 종료!');
 }
@@ -2344,17 +2467,18 @@ const RARITY_AURA = {
   'Non-eraser': {color:0xffffff, rings:4, particles:20, rotSpeed:0.034, rainbow:true},
 };
 
-function buildAura(rarity){
-  const cfg = RARITY_AURA[rarity];
+function buildAuraFromConfig(cfg){
   if(!cfg) return null;
   const g = new THREE.Group();
   g.userData.rainbow = !!cfg.rainbow;
+  g.userData.pulse = !!cfg.pulse;
   g.userData.mats = [];
+  const scale = cfg.scale || 1;
 
   for(let i=0;i<cfg.rings;i++){
     const c = (cfg.twoTone && i%2===1) ? cfg.color2 : cfg.color;
-    const ringMat = new THREE.MeshBasicMaterial({color:c, transparent:true, opacity:0.55-i*0.1, side:THREE.DoubleSide});
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.85+i*0.2, 0.03, 8, 40), ringMat);
+    const ringMat = new THREE.MeshBasicMaterial({color:c, transparent:true, opacity:0.55-i*0.06, side:THREE.DoubleSide});
+    const ring = new THREE.Mesh(new THREE.TorusGeometry((0.85+i*0.22)*scale, 0.03*Math.min(scale,1.6), 8, 40), ringMat);
     ring.rotation.x = Math.PI/2;
     ring.position.y = 0.06;
     ring.userData.spin = (i%2===0?1:-1)*cfg.rotSpeed;
@@ -2367,22 +2491,39 @@ function buildAura(rarity){
   for(let i=0;i<cfg.particles;i++){
     const c = (cfg.twoTone && i%2===1) ? cfg.color2 : cfg.color;
     const pm = new THREE.MeshBasicMaterial({color:c});
-    const p = new THREE.Mesh(new THREE.SphereGeometry(0.05,8,8), pm);
+    const psize = 0.045 + Math.min(scale-1, 1)*0.03; // 등급 높을수록 파티클도 살짝 더 큼
+    const p = new THREE.Mesh(new THREE.SphereGeometry(psize,8,8), pm);
     const ang = (i/cfg.particles)*Math.PI*2;
-    const r = 0.9 + (i%2)*0.15;
-    p.position.set(Math.cos(ang)*r, 0.3+Math.sin(i*1.7)*0.25, Math.sin(ang)*r);
+    const r = (0.9 + (i%2)*0.15 + (i%3)*0.1)*scale;
+    p.position.set(Math.cos(ang)*r, 0.3+Math.sin(i*1.7)*0.25*scale, Math.sin(ang)*r);
     orbit.add(p);
     g.userData.mats.push(pm);
   }
   g.add(orbit);
+
+  // Divine 전용: 하늘로 솟구치는 빛기둥
+  if(cfg.beam){
+    const beamMat = new THREE.MeshBasicMaterial({color:cfg.color, transparent:true, opacity:0.35, side:THREE.DoubleSide});
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.35,5.5,16,1,true), beamMat);
+    beam.position.y = 2.7;
+    g.add(beam);
+    g.userData.mats.push(beamMat);
+  }
+
+  g.userData.baseScale = 1;
   return g;
 }
+function buildAura(rarity){
+  return buildAuraFromConfig(RARITY_AURA[rarity]);
+}
 
-function setAura(charGroup, rarity){
+// source: 등급 문자열(RARITY_AURA에서 조회) 또는 아우라 설정 객체를 직접 받음
+function setAura(charGroup, source){
   if(charGroup.userData.auraGroup){
     charGroup.remove(charGroup.userData.auraGroup);
   }
-  const aura = buildAura(rarity);
+  const cfg = (typeof source === 'string') ? RARITY_AURA[source] : source;
+  const aura = buildAuraFromConfig(cfg);
   charGroup.userData.auraGroup = aura;
   if(aura) charGroup.add(aura);
 }
@@ -2397,6 +2538,10 @@ function updateAura(g){
     const hue = (performance.now()/20)%360;
     g.userData.mats.forEach(m=>m.color.setHSL(hue/360,0.9,0.6));
   }
+  if(g.userData.pulse){
+    const s = 1 + Math.sin(performance.now()/260)*0.08;
+    g.scale.set(s,s,s);
+  }
 }
 
 // ===== 스킨(색상+아우라) 적용 =====
@@ -2409,13 +2554,230 @@ function applyBodyMat(mat, skin){
 
 function applySkin(skin){
   applyBodyMat(player.userData.bodyMat, skin);
-  setAura(player, skin.rarity);
-  previewModels.forEach(m=>{
-    applyBodyMat(m.userData.bodyMat, skin);
-    setAura(m, skin.rarity);
-  });
+  previewModels.forEach(m=>applyBodyMat(m.userData.bodyMat, skin));
+  refreshAuraDisplay();
 }
 window.applySkin = applySkin;
+
+// 최종 아우라 결정: 아우라 가챠로 장착한 게 있으면 그게 우선, 없으면 스킨 등급 기본 아우라
+function refreshAuraDisplay(){
+  const auraItem = (typeof equippedAuraId !== 'undefined' && equippedAuraId)
+    ? AURA_POOL.find(a=>a.id===equippedAuraId) : null;
+  const cfg = auraItem ? auraItem : (currentSkin ? RARITY_AURA[currentSkin.rarity] : null);
+  setAura(player, cfg);
+  previewModels.forEach(m=>setAura(m, cfg));
+}
+
+// ===== 아우라 뽑기 (70종, 캐릭터 위에 뜨는 아우라 전용 가챠 - 색상 스킨과 별개) =====
+const AURA_GACHA_COST = 150;
+const AURA_PREFIXES = [
+  '불꽃','서리','번개','바람','대지','물','빛','어둠','피','독','강철','유령','수정','모래','별',
+  '달','태양','폭풍','용암','얼음','벚꽃','자수정','흑요석','에메랄드','장미','가시','안개','메아리','환영','파동'
+];
+const AURA_SUFFIXES = ['오라','기운','파장','결계','장막','빛무리'];
+// Uncommon 이상 40개는 예전 Ultra Gacha 프로젝트의 실제 등급 연출 이름을 그대로 가져와 번역
+const AURA_LEGACY_NAMES = [
+  '아케인 룬','신화의 용','별의 폭발','강철 장막','심해','불꽃 타격','픽셀 세계','가시벽 대지',
+  '야수의 불꽃','핏빛 가시','밤하늘','그림자 보라','유령 반전','서리 송곳니','천상의 기둥','잿빛 속박',
+  '서리 결정','폭풍의 낙인','레이스의 이중혼','공허의 낙인','코스믹 타이핑','불꽃 수호자','태양 플레어','황혼 망토',
+  '폭풍 번개','강철 분노','울트라 매트릭스','그림자 호수','일식의 고리','공허 무덤','공허의 바다','별파괴자',
+  '초고속','세라핌의 날개','아스트랄 왕관','무한','공포의 어둠','창세기','공허의 계약','영원의 기둥'
+];
+const AURA_TIER_DEFS = [
+  {name:'Common', weight:50, count:30},
+  {name:'Uncommon', weight:25, count:15},
+  {name:'Rare', weight:12, count:10},
+  {name:'Epic', weight:7, count:8},
+  {name:'Legendary', weight:3.5, count:4},
+  {name:'Mythic', weight:1.4, count:2},
+  {name:'Divine', weight:0.1, count:1},
+];
+const AURA_POOL = [];
+(function buildAuraPool(){
+  let idx = 0;
+  AURA_TIER_DEFS.forEach((tierDef, tierIdx)=>{
+    const perItemWeight = tierDef.weight / tierDef.count;
+    for(let k=0;k<tierDef.count;k++){
+      const hue = (idx*47) % 360;
+      const color = new THREE.Color().setHSL(hue/360, 0.7, 0.55).getHex();
+      // 아이템별로 링/파티클 패턴이 더 다양하게 흩어지도록(같은 등급이어도 서로 다르게 보이게)
+      // 등급이 높을수록 훨씬 화려해지도록 스케일을 가파르게 키움
+      const rings = 1 + Math.floor(tierIdx*0.9) + (idx%3===0 ? 1 : 0); // Common 1~2개 → Divine 6~7개
+      const particles = 6 + tierIdx*6 + (idx%2===0 ? 4 : 0);           // Common 6~10개 → Divine 40개+
+      const rotSpeed = 0.012 + tierIdx*0.007 + (idx%4)*0.002;          // 등급 높을수록 확실히 빠르게 돎
+      const scale = 1 + tierIdx*0.12;                                  // 등급 높을수록 아우라 자체가 더 큼
+      const rainbow = tierIdx >= 4; // Legendary부터 무지개
+      const pulse = tierIdx >= 3;   // Epic부터 커졌다 작아졌다 펄스
+      const beam = tierIdx >= 6;    // Divine 전용 - 하늘로 뻗는 빛기둥
+      const twoTone = !rainbow && (idx % 3 === 1); // 등급 안 가리고 종종 두 색이 섞이게
+      const color2 = twoTone ? new THREE.Color().setHSL(((hue+140)%360)/360, 0.7, 0.55).getHex() : undefined;
+      const name = tierIdx === 0
+        ? (AURA_PREFIXES[idx % 30] + ' ' + AURA_SUFFIXES[Math.floor(idx/30) % 6]) // Common은 자연 테마
+        : (AURA_LEGACY_NAMES[(idx-30) % AURA_LEGACY_NAMES.length]); // Uncommon 이상은 전설급 이름
+      AURA_POOL.push({
+        id: 'aura'+idx,
+        name,
+        tier: tierIdx, tierName: tierDef.name, weight: perItemWeight,
+        color, color2, rings, particles, rotSpeed, rainbow, twoTone, scale, pulse, beam
+      });
+      idx++;
+    }
+  });
+})();
+function pickWeightedAura(){
+  const total = AURA_POOL.reduce((s,a)=>s+a.weight,0);
+  let r = Math.random()*total;
+  for(const a of AURA_POOL){ if(r < a.weight) return a; r -= a.weight; }
+  return AURA_POOL[0];
+}
+function auraOddsLabel(aura){
+  const total = AURA_POOL.reduce((s,a)=>s+a.weight,0);
+  const oneIn = Math.round(total/aura.weight);
+  return '확률 1 / '+oneIn.toLocaleString();
+}
+
+let equippedAuraId = null;
+const userAuraCollection = {};
+
+async function loadAuraData(id){
+  await waitFirebase();
+  const dataRef = window._fb.ref('eraser3d_users/'+id);
+  const snap = await window._fb.get(dataRef);
+  const val = snap.val() || {};
+  Object.assign(userAuraCollection, val.auraCollection || {});
+  equippedAuraId = val.equippedAuraId || null;
+  refreshAuraDisplay();
+}
+async function saveAuraData(){
+  await waitFirebase();
+  const dataRef = window._fb.ref('eraser3d_users/'+window.CURRENT_USER);
+  await window._fb.update(dataRef, {auraCollection:userAuraCollection, equippedAuraId});
+}
+
+function renderAuraProbTable(){
+  const el = document.getElementById('auraProbTable');
+  if(!el) return;
+  el.innerHTML = '';
+  AURA_TIER_DEFS.forEach(t=>{
+    const item = document.createElement('div');
+    item.className = 'probItem';
+    item.innerHTML = '<div class="pname">'+t.name+'</div><div class="ppct">'+t.weight+'%</div>';
+    el.appendChild(item);
+  });
+}
+
+async function doAuraGachaPull(){
+  if(userCoins < AURA_GACHA_COST){
+    document.getElementById('auraIdleMsg').textContent = '코인이 부족해!';
+    document.getElementById('auraIdleMsg').style.color = '#e0446b';
+    return;
+  }
+  const btn = document.getElementById('auraGachaPullBtn');
+  btn.disabled = true;
+  userCoins -= AURA_GACHA_COST;
+  updateCoinUI();
+
+  const aura = pickWeightedAura();
+  const isNew = !userAuraCollection[aura.id];
+  userAuraCollection[aura.id] = true;
+
+  document.getElementById('auraIdleMsg').style.display = 'none';
+  const reelWrap = document.getElementById('skinReelWrap');
+  const star = document.getElementById('reelStar');
+  const fog = document.getElementById('reelFog');
+  const reelTitle = document.getElementById('reelTitle');
+  reelWrap.classList.add('active');
+  reelTitle.style.display = 'none';
+  star.style.display = '';
+
+  const spinMs = 900 + aura.tier*130;
+  star.style.animationDuration = Math.max(0.35, 1.1 - aura.tier*0.045)+'s';
+  star.classList.add('spinning');
+  await sleep(spinMs);
+
+  fog.classList.add('show');
+  star.classList.add('trembling');
+  await sleep(400);
+  star.classList.remove('trembling');
+  fog.classList.remove('show');
+
+  const crackCanvas = document.getElementById('crackCanvas');
+  const isHighTier = aura.tier >= 4; // Legendary 이상
+  if(isHighTier){
+    await runCrackBurst(crackCanvas, aura.tier, false);
+    await sleep(1000);
+    await runCrackBurst(crackCanvas, aura.tier, true);
+  } else {
+    await runCrackBurst(crackCanvas, aura.tier, false);
+  }
+  crackCanvas.getContext('2d').clearRect(0,0,crackCanvas.width,crackCanvas.height);
+
+  star.classList.remove('spinning');
+  star.style.display = 'none';
+  document.getElementById('reelTitleName').textContent = aura.name+(isNew?' (NEW!)':'');
+  document.getElementById('reelTitleRarity').textContent = aura.tierName;
+  document.getElementById('reelTitleOdds').textContent = auraOddsLabel(aura);
+  reelTitle.style.display = 'block';
+
+  // 실제로 장착해서 미리 캐릭터한테 보여줌
+  equippedAuraId = aura.id;
+  refreshAuraDisplay();
+  if(window.rebuildNameSprite) rebuildNameSprite();
+
+  await sleep(1200);
+  star.style.display = '';
+  reelWrap.classList.remove('active');
+  document.getElementById('auraIdleMsg').style.display = 'block';
+  document.getElementById('auraIdleMsg').style.color = '#bbb';
+  document.getElementById('auraIdleMsg').textContent = '뽑기를 눌러봐!';
+
+  await saveAuraData();
+  await saveUserGachaData();
+  btn.disabled = false;
+  renderAuraCollectionTabs();
+}
+
+let auraCollectionFilter = '전체';
+function renderAuraCollectionTabs(){
+  const tabs = document.getElementById('auraCollectionTabs');
+  if(!tabs) return;
+  const cats = ['전체', ...AURA_TIER_DEFS.map(t=>t.name)];
+  tabs.innerHTML = '';
+  cats.forEach(cat=>{
+    const btn = document.createElement('button');
+    btn.className = 'rarityTab'+(auraCollectionFilter===cat?' active':'');
+    btn.textContent = cat;
+    btn.addEventListener('click', ()=>{ auraCollectionFilter = cat; renderAuraCollectionList(); });
+    tabs.appendChild(btn);
+  });
+}
+function renderAuraCollectionList(){
+  renderAuraCollectionTabs();
+  const list = document.getElementById('auraCollectionList');
+  const list_ = AURA_POOL.filter(a=>auraCollectionFilter==='전체' || a.tierName===auraCollectionFilter);
+  const ownedTotal = Object.keys(userAuraCollection).length;
+  document.getElementById('auraCollectionCount').textContent = ownedTotal+' / '+AURA_POOL.length+' 수집';
+  list.innerHTML = '';
+  list_.forEach(aura=>{
+    const has = !!userAuraCollection[aura.id];
+    const row = document.createElement('div');
+    row.className = 'huntRow'+(has?' found':' locked');
+    const equippedTag = (has && equippedAuraId===aura.id) ? '<div class="hEquip">장착중</div>' : '';
+    const swatch = has ? '<div style="width:16px;height:16px;border-radius:5px;background:#'+aura.color.toString(16).padStart(6,'0')+';margin-right:2px;flex:0 0 auto;"></div>' : '';
+    row.innerHTML = '<div class="hIcon">'+(has?'🌟':'🔒')+'</div>'+swatch
+      +'<div class="hInfo"><div class="hName">'+(has?aura.name:'???')+'</div><div class="hTier">'+aura.tierName+'</div></div>'
+      +equippedTag;
+    if(has) row.addEventListener('click', ()=>{
+      equippedAuraId = aura.id;
+      refreshAuraDisplay();
+      if(window.rebuildNameSprite) rebuildNameSprite();
+      saveAuraData();
+      renderAuraCollectionList();
+      toast(aura.name+' 장착했어!');
+    });
+    list.appendChild(row);
+  });
+}
 
 // ===== 가챠 / 수집 시스템 =====
 // 등급 16단계, 확률: Common 35 · Uncommon 20 · Rare 15 · Epic 10 · Super Epic 7 · Mythic 5
@@ -2493,12 +2855,114 @@ function updateCoinUI(){
   document.getElementById('gameCoinAmount').textContent = userCoins;
   const kv = document.getElementById('kingdomViewCoin');
   if(kv) kv.textContent = userCoins;
+  const av = document.getElementById('auraGachaCoinAmount');
+  if(av) av.textContent = userCoins;
 }
 
 function resetGachaStage(){
   document.getElementById('gachaResult').innerHTML =
     '<div id="stampStage"><div id="doughBlob"></div><div id="moldBlock"></div></div>'
     +'<div class="rname" style="color:#bbb;">뽑기를 눌러봐!</div>';
+}
+
+function skinOddsLabel(skin){
+  const total = SKIN_POOL.reduce((s,x)=>s+x.weight,0);
+  const oneIn = Math.round(total/skin.weight);
+  return '확률 1 / '+oneIn.toLocaleString();
+}
+
+// ===== 화이트크랙(방사형 균열) 캔버스 연출 - 예전 Ultra Gacha 프로젝트 포팅 =====
+function genCrackLines(cx, cy, w, tierIdx){
+  const crackCount = 8 + Math.floor(tierIdx/1.5);
+  const crackLines = [], subCrackLines = [];
+  for(let i=0;i<crackCount;i++){
+    const angle = (Math.PI*2*i/crackCount) + (Math.random()-0.5)*0.35;
+    const len = w*0.42 + Math.random()*w*0.38;
+    const pts = [{x:cx,y:cy}]; let curX=cx, curY=cy, curAngle=angle;
+    const segCount = 5 + Math.floor(Math.random()*4);
+    for(let s=0;s<segCount;s++){
+      curAngle += (Math.random()-0.5)*0.5;
+      const segLen = (len/segCount)*(0.8+Math.random()*0.5);
+      curX += Math.cos(curAngle)*segLen;
+      curY += Math.sin(curAngle)*segLen;
+      pts.push({x:curX,y:curY});
+      if(Math.random()<0.55 && s>0){
+        const ba = curAngle + (Math.random()-0.5)*1.8;
+        const bl = segLen*(1.2+Math.random()*1.8);
+        subCrackLines.push([{x:curX,y:curY},{x:curX+Math.cos(ba)*bl,y:curY+Math.sin(ba)*bl}]);
+      }
+    }
+    crackLines.push(pts);
+  }
+  const webCount = 8 + tierIdx;
+  for(let i=0;i<webCount;i++){
+    const a1 = Math.random()*Math.PI*2, r1 = 15+Math.random()*w*0.15;
+    const a2 = a1+(Math.random()-0.5)*1.2, r2 = r1+12+Math.random()*50;
+    subCrackLines.push([
+      {x:cx+Math.cos(a1)*r1, y:cy+Math.sin(a1)*r1},
+      {x:cx+Math.cos(a2)*r2, y:cy+Math.sin(a2)*r2}
+    ]);
+  }
+  return {crackLines, subCrackLines};
+}
+
+function drawCracks(ctx, cx, cy, w, h, lines, progress, subProgress, intensity){
+  ctx.clearRect(0,0,w,h);
+  const glowR = w*0.16*Math.min(1,progress*1.6)*intensity;
+  const glow = ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(1,glowR));
+  glow.addColorStop(0, 'rgba(0,0,0,'+(0.3*intensity)+')');
+  glow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath(); ctx.arc(cx,cy,Math.max(1,glowR),0,7); ctx.fill();
+
+  if(intensity > 0.5){
+    lines.subCrackLines.forEach(pts=>{
+      if(subProgress < 0.15) return;
+      const visCount = Math.min(pts.length, Math.floor(Math.min(1,(subProgress-0.15)/0.7)*pts.length)+1);
+      if(visCount < 2) return;
+      ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+      for(let i=1;i<visCount;i++) ctx.lineTo(pts[i].x,pts[i].y);
+      ctx.strokeStyle = 'rgba(0,0,0,'+(0.5*intensity)+')'; ctx.lineWidth = 1.1; ctx.stroke();
+    });
+  }
+  lines.crackLines.forEach(pts=>{
+    const visCount = Math.floor(progress*pts.length);
+    if(visCount < 2) return;
+    ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+    for(let i=1;i<visCount;i++) ctx.lineTo(pts[i].x,pts[i].y);
+    ctx.strokeStyle = 'rgba(0,0,0,'+(0.16*intensity)+')'; ctx.lineWidth = 6*intensity; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+    for(let i=1;i<visCount;i++) ctx.lineTo(pts[i].x,pts[i].y);
+    ctx.strokeStyle = 'rgba(0,0,0,'+Math.min(1,0.5+intensity*0.5)+')'; ctx.lineWidth = Math.max(0.7,2*intensity); ctx.stroke();
+  });
+}
+
+// 작은 균열 한 번 "쩍" → 짧은 정지 → 전체로 퍼지는 "쩍!" 완전 파열 (한 세트)
+function runCrackBurst(canvas, tierIdx, strong){
+  return new Promise(resolve=>{
+    const root = document.getElementById('gachaResult');
+    canvas.width = root.offsetWidth || 300;
+    canvas.height = root.offsetHeight || 110;
+    const ctx = canvas.getContext('2d');
+    const cx = canvas.width/2, cy = 60;
+    const lines = genCrackLines(cx, cy, canvas.width, tierIdx);
+
+    drawCracks(ctx, cx, cy, canvas.width, canvas.height, lines, 0.12, 0, strong ? 0.55 : 0.4);
+    setTimeout(()=>{
+      const totalFrames = strong ? 12 : 9;
+      let frame = 0;
+      function step(){
+        const progress = 0.12 + (frame/totalFrames)*0.88;
+        const subProgress = frame/totalFrames;
+        const inten = (strong ? 0.5 : 0.4) + (frame/totalFrames)*(strong ? 0.7 : 0.6);
+        drawCracks(ctx, cx, cy, canvas.width, canvas.height, lines, progress, subProgress, inten);
+        frame++;
+        if(frame <= totalFrames) requestAnimationFrame(step);
+        else resolve();
+      }
+      requestAnimationFrame(step);
+    }, 260);
+  });
 }
 
 async function doGachaPull(){
@@ -2554,6 +3018,7 @@ function equipSkin(id){
   const skin = SKIN_POOL.find(s=>s.id===id);
   currentSkin = skin;
   applySkin(skin);
+  if(window.rebuildNameSprite) rebuildNameSprite();
   saveUserGachaData();
   renderCollectionGrid();
   toast(skin.name+' 장착했어!');
@@ -2697,22 +3162,54 @@ function renderCollectionGrid(){
 // ===== 닉네임 표시 (머리 위 텍스트) =====
 let nameSprite = null;
 function setPlayerName(text){
+  window.CURRENT_USERNAME = text;
+  rebuildNameSprite();
+}
+window.setPlayerName = setPlayerName;
+
+function rebuildNameSprite(){
+  const text = window.CURRENT_USERNAME;
+  if(!text) return;
   if(nameSprite){ player.remove(nameSprite); nameSprite.material.map.dispose(); nameSprite.material.dispose(); }
+
+  // 아레나가 아닐 때만 닉네임 아래에 장착한 아우라 이름 + 확률(1/N)을 같이 보여줌
+  let auraLine = null, oddsLine = null;
+  if(currentZone !== 'arena'){
+    const auraItem = (typeof equippedAuraId !== 'undefined' && equippedAuraId)
+      ? AURA_POOL.find(a=>a.id===equippedAuraId) : null;
+    if(auraItem){
+      auraLine = '✨ '+auraItem.name;
+      oddsLine = auraOddsLabel(auraItem);
+    } else if(currentSkin && RARITY_AURA[currentSkin.rarity]){
+      auraLine = currentSkin.rarity+' 스킨';
+      oddsLine = skinOddsLabel(currentSkin);
+    }
+  }
+
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
-  canvas.width = 256; canvas.height = 64;
+  canvas.width = 320; canvas.height = auraLine ? 128 : 64;
+
   ctx.font = 'bold 34px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  const w = ctx.measureText(text).width;
-  // 배경 (반투명 알약 모양)
+  const w = Math.max(ctx.measureText(text).width, auraLine?ctx.measureText(auraLine).width:0);
   ctx.fillStyle = 'rgba(0,0,0,0.45)';
-  const padX = 20;
-  roundRect(ctx, 128-w/2-padX, 12, w+padX*2, 40, 20);
+  const padX = 24;
+  roundRect(ctx, 160-w/2-padX, 8, w+padX*2, canvas.height-16, 20);
   ctx.fill();
-  // 텍스트
+
   ctx.fillStyle = '#ffffff';
-  ctx.fillText(text, 128, 33);
+  ctx.fillText(text, 160, auraLine ? 34 : 33);
+
+  if(auraLine){
+    ctx.font = 'bold 22px sans-serif';
+    ctx.fillStyle = '#ffd76f';
+    ctx.fillText(auraLine, 160, 72);
+    ctx.font = '18px sans-serif';
+    ctx.fillStyle = '#dddddd';
+    ctx.fillText(oddsLine, 160, 98);
+  }
 
   function roundRect(c, x, y, w, h, r){
     c.beginPath();
@@ -2727,12 +3224,12 @@ function setPlayerName(text){
   const tex = new THREE.CanvasTexture(canvas);
   const mat = new THREE.SpriteMaterial({map:tex, depthTest:false, transparent:true});
   nameSprite = new THREE.Sprite(mat);
-  nameSprite.scale.set(1.6, 0.4, 1);
+  nameSprite.scale.set(1.6, 1.6*(canvas.height/canvas.width), 1);
   nameSprite.position.set(0, (player.userData.shapeH||BODY_H)+0.5, 0);
   nameSprite.renderOrder = 999;
   player.add(nameSprite);
 }
-window.setPlayerName = setPlayerName;
+window.rebuildNameSprite = rebuildNameSprite;
 
 // ===== 입력 =====
 const keys = {};
@@ -3260,6 +3757,10 @@ function update(){
       meleeSwingPhase -= 0.16;
       if(meleeSwingPhase < 0) meleeSwingPhase = 0;
     }
+    if(shiftLock){
+      // 쉬프트 락: 팔(무기)도 카메라가 보는 상하 각도(pitch)에 완전히 맞춰서 진짜 조준한 곳을 가리키게 함
+      player.userData.rightArm.rotation.x -= camPitch;
+    }
   }
 
   // 카메라: 아레나에서는 참고 영상(라이벌)처럼 1인칭, 탐험에서는 기존 3인칭
@@ -3272,8 +3773,15 @@ function update(){
     Math.cos(camYaw)*Math.cos(camPitch)
   );
   const pivot = player.position.clone().add(new THREE.Vector3(0, eyeHeight, 0));
-  const targetCamPos = pivot.clone().sub(aimFwd.clone().multiplyScalar(camDist));
-  targetCamPos.y = Math.max(targetCamPos.y, gY+0.3); // 바닥 뚫고 내려가지 않게
+  // 3인칭에서는 위아래를 볼 때 카메라 높이가 너무 확 튀지 않게 수직 스윙 폭을 줄임 (범프 방지)
+  const vertScale = inArenaCam ? 1 : 0.45;
+  const targetCamPos = new THREE.Vector3(
+    pivot.x - aimFwd.x*camDist,
+    pivot.y - aimFwd.y*camDist*vertScale,
+    pivot.z - aimFwd.z*camDist
+  );
+  const groundLimit = gY+0.3;
+  if(targetCamPos.y < groundLimit) targetCamPos.y = groundLimit; // 바닥 뚫고 내려가지 않게 (수직 스윙이 줄어서 거의 안 걸림)
   camera.position.lerp(targetCamPos, inArenaCam ? 0.6 : 0.22); // 1인칭은 지연 없이 즉각 반응
   if(camShakeAmt > 0.001){
     camera.position.x += (Math.random()-0.5)*camShakeAmt;
@@ -3402,6 +3910,7 @@ async function showHomeScreen(username){
   initPreview();
   await loadUserGachaData(username);
   await loadFoundErasers(username);
+  await loadAuraData(username);
   await loadKingdom(username);
   await loadLoadout(username);
   updateLevelUI();
@@ -3444,6 +3953,7 @@ function enterExploreMode(spawnPos, zone){
   currentZone = zone;
   exploreZoneGroup.visible = (zone === 'explore');
   arenaZoneGroup.visible = (zone === 'arena');
+  if(window.rebuildNameSprite) rebuildNameSprite();
 
   document.getElementById('homeScreen').style.display = 'none';
   document.getElementById('joystick').style.display = 'block';
@@ -3518,6 +4028,7 @@ document.getElementById('exitExploreBtn').addEventListener('click', async ()=>{
   document.getElementById('battleHud').style.display = 'none';
   document.getElementById('pingBadge').style.display = 'none';
   document.getElementById('myHpBadge').style.display = 'none';
+  document.getElementById('teamBadge').style.display = 'none';
   currentMatchId = null;
   document.getElementById('homeScreen').style.display = 'block';
   if(wakeLock){ try{ await wakeLock.release(); }catch(e){} wakeLock = null; }
@@ -3639,6 +4150,27 @@ document.getElementById('gachaCloseBtn').addEventListener('click', ()=>{
   document.getElementById('gachaOverlay').style.display = 'none';
 });
 document.getElementById('gachaPullBtn').addEventListener('click', doGachaPull);
+
+document.getElementById('navAuraGacha').addEventListener('click', ()=>{
+  document.getElementById('auraIdleMsg').style.display = 'block';
+  document.getElementById('auraIdleMsg').style.color = '#bbb';
+  document.getElementById('auraIdleMsg').textContent = '뽑기를 눌러봐!';
+  document.getElementById('reelTitle').style.display = 'none';
+  document.getElementById('auraGachaCoinAmount').textContent = userCoins;
+  renderAuraProbTable();
+  document.getElementById('auraGachaOverlay').style.display = 'flex';
+});
+document.getElementById('auraGachaCloseBtn').addEventListener('click', ()=>{
+  document.getElementById('auraGachaOverlay').style.display = 'none';
+});
+document.getElementById('auraGachaPullBtn').addEventListener('click', doAuraGachaPull);
+document.getElementById('auraCollectionBtn').addEventListener('click', ()=>{
+  renderAuraCollectionList();
+  document.getElementById('auraCollectionOverlay').style.display = 'flex';
+});
+document.getElementById('auraCollectionCloseBtn').addEventListener('click', ()=>{
+  document.getElementById('auraCollectionOverlay').style.display = 'none';
+});
 
 document.getElementById('navCollection').addEventListener('click', ()=>{
   showSkinSlot();
