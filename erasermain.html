@@ -208,6 +208,28 @@
   .tutDot{ font-size:9px;color:#ddd; }
   .tutDot.active{ color:#ff6fa5; }
 
+  #cardPackOverlay{
+    display:none;position:fixed;inset:0;z-index:80;background:rgba(20,15,30,0.85);
+    align-items:center;justify-content:center;
+  }
+  #cardPackGrid{
+    display:grid;grid-template-columns:repeat(3,84px);gap:12px;padding:20px;
+  }
+  .packCard{
+    width:84px;height:112px;position:relative;perspective:600px;
+  }
+  .packCardBack, .packCardFront{
+    position:absolute;inset:0;border-radius:10px;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;backface-visibility:hidden;
+    transition:transform 0.5s;box-shadow:0 4px 10px rgba(0,0,0,0.35);
+  }
+  .packCardBack{ background:linear-gradient(160deg,#ff9fc4,#a97cff);font-size:34px;color:#fff; }
+  .packCardFront{ transform:rotateY(180deg);color:#fff;padding:6px;text-align:center; }
+  .packCardFront .pcTier{ font-size:10px;font-weight:bold;opacity:0.85;margin-bottom:4px;text-shadow:0 1px 2px rgba(0,0,0,0.4); }
+  .packCardFront .pcName{ font-size:12px;font-weight:bold;text-shadow:0 1px 2px rgba(0,0,0,0.4); }
+  .packCard.flipped .packCardBack{ transform:rotateY(180deg); }
+  .packCard.flipped .packCardFront{ transform:rotateY(0deg); }
+
   /* ═══ 브롤러 선택 카드 (브롤스타즈 스타일) ═══ */
   #brawlerSelectGrid{
     display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;
@@ -460,14 +482,19 @@
   .modalCard{
     width:300px;max-height:80vh;overflow-y:auto;background:#fff;border-radius:20px;
     padding:20px;text-align:center;font-family:'Segoe UI',sans-serif;
+    box-shadow:0 12px 40px rgba(0,0,0,0.25);
+    animation:modalPopIn 0.22s cubic-bezier(0.2,1.4,0.5,1);
   }
+  @keyframes modalPopIn{ from{ transform:scale(0.9); opacity:0; } to{ transform:scale(1); opacity:1; } }
   .modalCard h2{margin:0 0 4px;color:#ff6fa5;font-size:20px;}
   .modalCard .modalCoin{font-size:13px;color:#a5497a;margin-bottom:14px;font-weight:bold;}
   #gachaPullBtn{
     width:100%;padding:14px;border:none;border-radius:12px;background:#ff6fa5;color:#fff;
     font-size:15px;font-weight:bold;cursor:pointer;margin-bottom:10px;
+    box-shadow:0 4px 0 #d6407e;transition:transform 0.08s, box-shadow 0.08s;
   }
-  #gachaPullBtn:disabled{background:#ccc;cursor:not-allowed;}
+  #gachaPullBtn:active{ transform:translateY(3px); box-shadow:0 1px 0 #d6407e; }
+  #gachaPullBtn:disabled{background:#ccc;cursor:not-allowed;box-shadow:none;}
   #gachaResult{
     min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center;
     background:#fff6fa;border-radius:14px;margin-bottom:12px;padding:14px;
@@ -634,6 +661,7 @@
 
 <div id="joystick"><div id="stick"></div></div>
 <div id="gameCoinHud">🪙 <span id="gameCoinAmount">0</span></div>
+<div id="raceHud" style="display:none;position:fixed;top:16px;left:50%;transform:translateX(-50%);background:rgba(20,25,40,0.75);color:#fff;padding:10px 20px;border-radius:14px;font-family:'Segoe UI',sans-serif;font-weight:bold;text-align:center;z-index:15;"></div>
 <div id="huntHud">🔍 <span id="huntHudCount">0/5</span></div>
 <div id="shiftLockBtn">🔓</div>
 <div id="loadoutBtn">🎒</div>
@@ -732,6 +760,7 @@
   </div>
   <div id="homeCoinBadge" style="position:absolute;top:64px;left:16px;">🪙 <span id="coinAmount">0</span></div>
   <div id="homeTrophyBadge" style="position:absolute;top:64px;right:16px;background:rgba(255,255,255,0.85);border-radius:20px;padding:7px 14px;font-size:13px;font-weight:bold;color:#a5497a;box-shadow:0 4px 12px rgba(0,0,0,0.12);font-family:'Segoe UI',sans-serif;">🏆 <span id="trophyAmount">0</span></div>
+  <div id="sfxMuteBtn" style="position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.85);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 4px 12px rgba(0,0,0,0.12);">🔊</div>
   <div id="homeRankBadge" style="position:absolute;top:102px;right:16px;background:rgba(255,255,255,0.85);border-radius:20px;padding:7px 14px;font-size:12px;font-weight:bold;color:#4a5a8a;box-shadow:0 4px 12px rgba(0,0,0,0.12);font-family:'Segoe UI',sans-serif;"><span id="rankBadgeText">배치고사 0/5</span></div>
   <div id="dailyMissionCard">
     <div class="dmTitle">📋 오늘의 미션</div>
@@ -750,8 +779,9 @@
     <button class="navBtn primary" id="navRanked"><span class="ic">🏅</span>랭크전</button>
     <button class="navBtn primary" id="navLeaderboard"><span class="ic">📊</span>랭킹</button>
     <button class="navBtn primary" id="navGuild"><span class="ic">🛡️</span>길드</button>
+    <button class="navBtn primary" id="navShop"><span class="ic">🛒</span>샵</button>
     <button class="navBtn primary" id="navBrawlerSelect"><span class="ic">🎭</span>브롤러</button>
-    <button class="navBtn" id="navRace"><span class="ic">🏁</span>레이싱<span class="lock">준비중</span></button>
+    <button class="navBtn primary" id="navRace"><span class="ic">🏁</span>레이싱</button>
   </div>
 </div>
 
@@ -816,6 +846,40 @@
     <div id="auraCollectionTabs" style="display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;"></div>
     <div id="auraCollectionList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;max-height:340px;overflow-y:auto;"></div>
     <button class="modalCloseBtn" id="auraCollectionCloseBtn">닫기</button>
+  </div>
+</div>
+
+<div class="modalOverlay" id="shopOverlay">
+  <div class="modalCard">
+    <h2>🛒 샵</h2>
+    <div class="modalCoin">보유 코인: 🪙 <span id="shopCoinAmount">0</span></div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:14px;">
+      <div style="background:#f8f4ff;border-radius:16px;padding:14px;text-align:left;">
+        <div style="font-weight:bold;font-size:15px;margin-bottom:4px;">🌟 아우라 팩</div>
+        <div style="font-size:12px;color:#888;margin-bottom:10px;">70종 아우라 중 1개 랜덤 획득</div>
+        <button id="shopBuyAuraBtn" style="width:100%;padding:11px;border:none;border-radius:10px;background:#7a5fd1;color:#fff;font-weight:bold;">150 🪙 구매</button>
+      </div>
+      <div style="background:#fff6fa;border-radius:16px;padding:14px;text-align:left;">
+        <div style="font-weight:bold;font-size:15px;margin-bottom:4px;">📦 지우개 카드팩</div>
+        <div style="font-size:12px;color:#888;margin-bottom:10px;">카드 6장 오픈! (실제 장착과는 별개인 수집용 카드)</div>
+        <button id="shopBuyCardBtn" style="width:100%;padding:11px;border:none;border-radius:10px;background:#ff6fa5;color:#fff;font-weight:bold;">200 🪙 구매</button>
+      </div>
+      <button id="shopAlbumBtn" style="width:100%;padding:11px;border:none;border-radius:10px;background:#efe9fb;color:#7a5fd1;font-weight:bold;">📖 지우개 카드 도감 보기</button>
+    </div>
+    <button class="modalCloseBtn" id="shopCloseBtn">닫기</button>
+  </div>
+</div>
+
+<div id="cardPackOverlay">
+  <div id="cardPackGrid"></div>
+</div>
+
+<div class="modalOverlay" id="cardAlbumOverlay">
+  <div class="modalCard">
+    <h2>📖 지우개 카드 도감</h2>
+    <div class="modalCoin" id="cardAlbumCount">0 / 48 수집</div>
+    <div id="cardAlbumList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;max-height:360px;overflow-y:auto;"></div>
+    <button class="modalCloseBtn" id="cardAlbumCloseBtn">닫기</button>
   </div>
 </div>
 
@@ -1037,6 +1101,63 @@ pwInput.addEventListener('keydown', e=>{ if(e.key==='Enter') onLogin(); });
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script>
 // ===== 기본 씬 세팅 =====
+// ===== 효과음 시스템 (파일 없이 웹오디오로 직접 합성) =====
+let audioCtx = null;
+let sfxMuted = false;
+function getAudioCtx(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ return null; }
+  }
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+function playTone(freq, duration, type, gainAmt, freqEnd){
+  if(sfxMuted) return;
+  const ctx = getAudioCtx();
+  if(!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type || 'sine';
+  osc.frequency.setValueAtTime(freq, ctx.currentTime);
+  if(freqEnd) osc.frequency.exponentialRampToValueAtTime(Math.max(1,freqEnd), ctx.currentTime+duration);
+  gain.gain.setValueAtTime(gainAmt||0.15, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+duration);
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start(); osc.stop(ctx.currentTime+duration);
+}
+function playNoise(duration, gainAmt){
+  if(sfxMuted) return;
+  const ctx = getAudioCtx();
+  if(!ctx) return;
+  const bufSize = ctx.sampleRate*duration;
+  const buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for(let i=0;i<bufSize;i++) data[i] = (Math.random()*2-1)*(1-i/bufSize);
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(gainAmt||0.2, ctx.currentTime);
+  src.connect(gain); gain.connect(ctx.destination);
+  src.start();
+}
+const SFX = {
+  jump:    ()=>playTone(420, 0.14, 'sine', 0.12, 620),
+  coin:    ()=>{ playTone(880,0.09,'square',0.1,1200); setTimeout(()=>playTone(1300,0.09,'square',0.08),60); },
+  hunt:    ()=>{ playTone(660,0.12,'triangle',0.14,990); setTimeout(()=>playTone(990,0.14,'triangle',0.12,1320),90); },
+  fire:    ()=>playNoise(0.06, 0.09),
+  hit:     ()=>playTone(200,0.08,'square',0.12,80),
+  headshot:()=>{ playTone(1000,0.1,'square',0.15,1500); setTimeout(()=>playTone(1500,0.1,'square',0.12),60); },
+  reload:  ()=>playTone(300,0.15,'sawtooth',0.08,180),
+  hurt:    ()=>playTone(140,0.15,'sawtooth',0.15,60),
+  death:   ()=>playTone(220,0.4,'sawtooth',0.16,50),
+  ability: ()=>{ playTone(500,0.12,'sine',0.14,900); setTimeout(()=>playTone(900,0.12,'sine',0.1,1300),80); },
+  click:   ()=>playTone(500,0.05,'sine',0.08,700),
+  gachaSpin:()=>playTone(400,0.06,'sine',0.05,500),
+  gachaCrack:()=>playNoise(0.12, 0.18),
+  win:     ()=>{ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>playTone(f,0.22,'triangle',0.14),i*110)); },
+  lose:    ()=>{ [400,340,280].forEach((f,i)=>setTimeout(()=>playTone(f,0.28,'sawtooth',0.12),i*140)); },
+};
+
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87ceeb);
 scene.fog = new THREE.Fog(0xbfe3ff, 30, 130);
@@ -1111,12 +1232,14 @@ ground.rotation.x = -Math.PI/2;
 ground.receiveShadow = true;
 scene.add(ground);
 
-// ===== 구역(존) 분리: 탐험/아레나가 서로 안 보이고 안 겹치게 그룹으로 묶음 =====
+// ===== 구역(존) 분리: 탐험/아레나/레이싱이 서로 안 보이고 안 겹치게 그룹으로 묶음 =====
 const exploreZoneGroup = new THREE.Group();
 const arenaZoneGroup = new THREE.Group();
+const raceZoneGroup = new THREE.Group();
 scene.add(exploreZoneGroup);
 scene.add(arenaZoneGroup);
-let currentZone = 'explore'; // 'explore' | 'arena' - 지금 어느 구역에 있는지
+scene.add(raceZoneGroup);
+let currentZone = 'explore'; // 'explore' | 'arena' | 'race' - 지금 어느 구역에 있는지
 
 // 지우개 몸통 기본 치수 (지우개 찾기 스폰이 이 상수를 쓰므로 맵 코드보다 앞에 선언)
 const BODY_W = 1.0;   // 너비
@@ -1575,6 +1698,117 @@ function buildBattleMap(mapDef){
 }
 ARENA_MAPS.forEach(buildBattleMap);
 
+// ===== 레이싱 트랙 (달려서 체크포인트 통과, 3바퀴) =====
+const RACE_CENTER = {x:-100, z:100};
+const RACE_CHECKPOINTS = []; // {x,z,radius}
+(function buildRaceTrack(){
+  const pathPts = [
+    [0,-22],[16,-16],[24,0],[16,16],[0,22],[-16,16],[-24,0],[-16,-16]
+  ].map(([dx,dz])=>({x:RACE_CENTER.x+dx, z:RACE_CENTER.z+dz}));
+
+  addGroundPatch(RACE_CENTER.x, RACE_CENTER.z, 34, 0x2a3550, raceZoneGroup);
+  // 트랙 경로를 따라 도로 느낌의 판을 이어 붙임 + 체크포인트 게이트
+  for(let i=0;i<pathPts.length;i++){
+    const a = pathPts[i], b = pathPts[(i+1)%pathPts.length];
+    const midX = (a.x+b.x)/2, midZ = (a.z+b.z)/2;
+    const len = Math.hypot(b.x-a.x, b.z-a.z);
+    const ang = Math.atan2(b.z-a.z, b.x-a.x);
+    const road = new THREE.Mesh(new THREE.BoxGeometry(len+2, 0.08, 5), new THREE.MeshStandardMaterial({color:0x3a4560}));
+    road.position.set(midX, 0.05, midZ);
+    road.rotation.y = -ang;
+    raceZoneGroup.add(road);
+
+    // 체크포인트 게이트 (다음 지점 a=포인트 자체)
+    const gateColor = i===0 ? 0xffd76f : 0x60c0ff;
+    const gate = new THREE.Mesh(new THREE.TorusGeometry(2.6,0.15,8,20), new THREE.MeshBasicMaterial({color:gateColor}));
+    gate.position.set(a.x, 2.2, a.z);
+    gate.rotation.y = -ang;
+    raceZoneGroup.add(gate);
+    RACE_CHECKPOINTS.push({x:a.x, z:a.z, radius:3.2});
+  }
+  // 경계 장식 기둥
+  pathPts.forEach(p=>{
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.15,3,8), new THREE.MeshStandardMaterial({color:0xffffff, emissive:0x60c0ff, emissiveIntensity:0.4}));
+    pole.position.set(p.x, 1.5, p.z);
+    raceZoneGroup.add(pole);
+  });
+})();
+const RACE_TOTAL_LAPS = 3;
+let raceActive = false;
+let raceLap = 1;
+let raceCpIndex = 0;
+let raceStartMs = 0;
+let raceBestTime = null;
+
+async function loadRaceBest(id){
+  await waitFirebase();
+  const snap = await window._fb.get(window._fb.ref('eraser3d_users/'+id+'/raceBestTime'));
+  raceBestTime = snap.val() || null;
+}
+async function saveRaceBest(ms){
+  if(raceBestTime !== null && ms >= raceBestTime) return;
+  raceBestTime = ms;
+  await waitFirebase();
+  await window._fb.set(window._fb.ref('eraser3d_users/'+window.CURRENT_USER+'/raceBestTime'), ms);
+}
+function fmtRaceTime(ms){
+  const s = ms/1000;
+  return s.toFixed(2)+'초';
+}
+function startRace(){
+  raceActive = true;
+  raceLap = 1;
+  raceCpIndex = 0;
+  raceStartMs = performance.now();
+  const start = RACE_CHECKPOINTS[0];
+  player.position.set(start.x, 0, start.z+4);
+  document.getElementById('raceHud').style.display = 'block';
+  updateRaceHud();
+}
+function updateRaceHud(){
+  const el = document.getElementById('raceHud');
+  if(!el) return;
+  const elapsed = (performance.now()-raceStartMs)/1000;
+  el.innerHTML = '🏁 '+raceLap+' / '+RACE_TOTAL_LAPS+' 바퀴<br>⏱️ '+elapsed.toFixed(2)+'초'
+    + (raceBestTime!==null ? '<br><span style="opacity:0.7;font-size:11px;">최고기록 '+fmtRaceTime(raceBestTime)+'</span>' : '');
+}
+async function finishRace(){
+  raceActive = false;
+  const totalMs = performance.now()-raceStartMs;
+  const isNewBest = raceBestTime===null || totalMs < raceBestTime;
+  await saveRaceBest(totalMs);
+  const coinReward = 40 + (isNewBest ? 40 : 0);
+  userCoins += coinReward;
+  updateCoinUI();
+  saveUserGachaData();
+  document.getElementById('raceHud').style.display = 'none';
+  document.getElementById('mrTitle').textContent = 'Finish!';
+  document.getElementById('mrTitle').className = 'mrTitle win';
+  document.getElementById('mrTrophy').textContent = fmtRaceTime(totalMs) + (isNewBest ? '  🎉 신기록!' : '') + '  ·  +'+coinReward+' 🪙';
+  document.getElementById('mrKills').textContent = RACE_TOTAL_LAPS;
+  document.getElementById('mrDamage').textContent = fmtRaceTime(totalMs);
+  document.getElementById('matchResultOverlay').style.display = 'flex';
+  resultCamActive = true;
+  SFX.win();
+  await sleep(3200);
+  resultCamActive = false;
+  document.getElementById('matchResultOverlay').style.display = 'none';
+}
+function updateRaceProgress(){
+  if(!raceActive) return;
+  const cp = RACE_CHECKPOINTS[raceCpIndex];
+  if(player.position.distanceTo(new THREE.Vector3(cp.x,player.position.y,cp.z)) < cp.radius){
+    SFX.coin();
+    raceCpIndex++;
+    if(raceCpIndex >= RACE_CHECKPOINTS.length){
+      raceCpIndex = 0;
+      raceLap++;
+      if(raceLap > RACE_TOTAL_LAPS){ finishRace(); return; }
+    }
+  }
+  updateRaceHud();
+}
+
 // ===== 연습용 더미 타겟 (실제 대미지 테스트용) =====
 const WEAPON_STATS = {
   ak47:   {name:'AK47',   dmg:18, rate:180,  range:45, type:'gun', color:0x3a4a2a, mag:30, reload:1700, auto:true},
@@ -1785,11 +2019,11 @@ async function joinQueue(mode){
   document.getElementById('mmText').textContent = mode.name+' 매칭 찾는 중...';
   document.getElementById('matchmakingOverlay').style.display = 'flex';
   const uid = window.CURRENT_USER;
-  const queueRef = window._fb.ref('arenaQueue/'+mode.id+'/'+uid);
+  const queueRef = window._fb.ref('eraser3d_arenaQueue/'+mode.id+'/'+uid);
   await window._fb.set(queueRef, {ts: Date.now()});
 
   // 내 매칭 배정을 감시
-  const assignRef = window._fb.ref('arenaAssignment/'+uid);
+  const assignRef = window._fb.ref('eraser3d_arenaAssignment/'+uid);
   matchListenerRef = assignRef;
   window._fb.onValue(assignRef, snap=>{
     const val = snap.val();
@@ -1800,7 +2034,7 @@ async function joinQueue(mode){
   });
 
   // 대기열을 확인해서 인원이 충분하면 이 클라이언트가 매칭을 성사시킴 (베스트에포트, 트랜잭션 없이 단순화)
-  const snap = await window._fb.get(window._fb.ref('arenaQueue/'+mode.id));
+  const snap = await window._fb.get(window._fb.ref('eraser3d_arenaQueue/'+mode.id));
   const val = snap.val() || {};
   const waitingIds = Object.keys(val).sort((a,b)=>val[a].ts-val[b].ts);
   if(waitingIds.length >= mode.min){
@@ -1808,12 +2042,12 @@ async function joinQueue(mode){
     const matchId = mode.id+'_'+Date.now();
     const players = {};
     chosen.forEach((pid,i)=>{ players[pid] = {team: i%2===0?'red':'blue'}; });
-    await window._fb.set(window._fb.ref('arenaMatches/'+matchId), {
+    await window._fb.set(window._fb.ref('eraser3d_arenaMatches/'+matchId), {
       mode: mode.id, players, state:'mapselect', selectedMap:null, scores:{red:0,blue:0}, startTime:null
     });
     for(const pid of chosen){
-      await window._fb.remove(window._fb.ref('arenaQueue/'+mode.id+'/'+pid));
-      await window._fb.set(window._fb.ref('arenaAssignment/'+pid), {matchId});
+      await window._fb.remove(window._fb.ref('eraser3d_arenaQueue/'+mode.id+'/'+pid));
+      await window._fb.set(window._fb.ref('eraser3d_arenaAssignment/'+pid), {matchId});
     }
   }
 
@@ -1833,7 +2067,7 @@ document.getElementById('mmCancelBtn').addEventListener('click', async ()=>{
   clearTimeout(botFallbackTimer);
   if(!nearestStand) return;
   await waitFirebase();
-  await window._fb.remove(window._fb.ref('arenaQueue/'+nearestStand.mode.id+'/'+window.CURRENT_USER));
+  await window._fb.remove(window._fb.ref('eraser3d_arenaQueue/'+nearestStand.mode.id+'/'+window.CURRENT_USER));
   if(matchListenerRef) window._fb.remove(matchListenerRef).catch(()=>{});
 });
 
@@ -1844,7 +2078,7 @@ async function onMatchFound(matchId){
   renderMapSelect();
   document.getElementById('mapSelectOverlay').style.display = 'flex';
 
-  mapListenerRef = window._fb.ref('arenaMatches/'+matchId+'/selectedMap');
+  mapListenerRef = window._fb.ref('eraser3d_arenaMatches/'+matchId+'/selectedMap');
   window._fb.onValue(mapListenerRef, snap=>{
     const mapId = snap.val();
     if(mapId){ onMapSelected(matchId, mapId); }
@@ -1865,7 +2099,7 @@ function renderMapSelect(botMode){
         return;
       }
       await waitFirebase();
-      await window._fb.set(window._fb.ref('arenaMatches/'+currentMatchId+'/selectedMap'), m.id);
+      await window._fb.set(window._fb.ref('eraser3d_arenaMatches/'+currentMatchId+'/selectedMap'), m.id);
     });
     list.appendChild(card);
   });
@@ -2056,6 +2290,7 @@ function updateBots(){
 }
 
 function handleMyDeathLocal(){
+  SFX.death();
   document.getElementById('deathOverlay').style.display = 'flex';
   let secs = 3;
   document.getElementById('respawnText').textContent = secs+'초 후 부활...';
@@ -2153,13 +2388,13 @@ async function onMapSelected(matchId, mapId){
   document.getElementById('mapSelectOverlay').style.display = 'none';
 
   await waitFirebase();
-  const snap = await window._fb.get(window._fb.ref('arenaMatches/'+matchId));
+  const snap = await window._fb.get(window._fb.ref('eraser3d_arenaMatches/'+matchId));
   const match = snap.val();
   if(!match) return;
   let startTime = match.startTime;
   if(!startTime){
     startTime = Date.now();
-    await window._fb.update(window._fb.ref('arenaMatches/'+matchId), {startTime, state:'battle'});
+    await window._fb.update(window._fb.ref('eraser3d_arenaMatches/'+matchId), {startTime, state:'battle'});
   }
 
   document.getElementById('battleHud').style.display = 'flex';
@@ -2168,7 +2403,7 @@ async function onMapSelected(matchId, mapId){
   startPingLoop();
   startBattlePvp(matchId, match);
 
-  window._fb.onValue(window._fb.ref('arenaMatches/'+matchId+'/scores'), snap2=>{
+  window._fb.onValue(window._fb.ref('eraser3d_arenaMatches/'+matchId+'/scores'), snap2=>{
     const scores = snap2.val() || {red:0,blue:0};
     document.getElementById('redScoreEl').textContent = scores.red;
     document.getElementById('blueScoreEl').textContent = scores.blue;
@@ -2193,6 +2428,7 @@ function updateMyHpUI(){
 }
 
 function showDamageFlash(){
+  SFX.hurt();
   const el = document.getElementById('damageFlash');
   el.style.display = 'block';
   clearTimeout(el._t);
@@ -2209,19 +2445,19 @@ async function startBattlePvp(matchId, match){
   document.getElementById('myHpBadge').style.display = 'block';
   updateMyHpUI();
 
-  await window._fb.update(window._fb.ref('arenaMatches/'+matchId+'/players/'+uid), {
+  await window._fb.update(window._fb.ref('eraser3d_arenaMatches/'+matchId+'/players/'+uid), {
     team: myTeam, hp:100, x:spawn.x, y:0, z:spawn.z, ry:0
   });
 
   clearInterval(posSyncTimer);
   posSyncTimer = setInterval(()=>{
     if(!currentMatchId) return;
-    window._fb.update(window._fb.ref('arenaMatches/'+matchId+'/players/'+uid), {
+    window._fb.update(window._fb.ref('eraser3d_arenaMatches/'+matchId+'/players/'+uid), {
       x: player.position.x, z: player.position.z, ry: player.rotation.y
     }).catch(()=>{});
   }, 150);
 
-  playersListenerRef = window._fb.ref('arenaMatches/'+matchId+'/players');
+  playersListenerRef = window._fb.ref('eraser3d_arenaMatches/'+matchId+'/players');
   window._fb.onValue(playersListenerRef, snap=>{
     const players = snap.val() || {};
     Object.keys(players).forEach(pid=>{
@@ -2255,6 +2491,7 @@ async function startBattlePvp(matchId, match){
 }
 
 async function handleMyDeath(matchId){
+  SFX.death();
   document.getElementById('deathOverlay').style.display = 'flex';
   let secs = 3;
   document.getElementById('respawnText').textContent = secs+'초 후 부활...';
@@ -2267,7 +2504,7 @@ async function handleMyDeath(matchId){
       player.position.set(spawn.x,0,spawn.z);
       myHp = 100;
       updateMyHpUI();
-      await window._fb.update(window._fb.ref('arenaMatches/'+matchId+'/players/'+window.CURRENT_USER), {hp:100, x:spawn.x, z:spawn.z});
+      await window._fb.update(window._fb.ref('eraser3d_arenaMatches/'+matchId+'/players/'+window.CURRENT_USER), {hp:100, x:spawn.x, z:spawn.z});
     } else {
       document.getElementById('respawnText').textContent = secs+'초 후 부활...';
     }
@@ -2276,7 +2513,7 @@ async function handleMyDeath(matchId){
 
 async function damageRemotePlayer(pid, dmg, hitPoint, isHeadshot, isWallbang){
   if(!currentMatchId) return;
-  const playerRef = window._fb.ref('arenaMatches/'+currentMatchId+'/players/'+pid);
+  const playerRef = window._fb.ref('eraser3d_arenaMatches/'+currentMatchId+'/players/'+pid);
   const pSnap = await window._fb.get(playerRef);
   const pData = pSnap.val();
   if(!pData || typeof pData.hp !== 'number' || pData.hp<=0) return;
@@ -2285,14 +2522,14 @@ async function damageRemotePlayer(pid, dmg, hitPoint, isHeadshot, isWallbang){
   const newHp = Math.max(0, pData.hp-dmg);
   myDamageDealt += dmg;
   applyLifesteal(dmg);
-  await window._fb.set(window._fb.ref('arenaMatches/'+currentMatchId+'/players/'+pid+'/hp'), newHp);
+  await window._fb.set(window._fb.ref('eraser3d_arenaMatches/'+currentMatchId+'/players/'+pid+'/hp'), newHp);
   const tag = isHeadshot ? 'head' : isWallbang ? 'wall' : null;
   showDamageNumber(hitPoint, dmg, tag);
   flashHitMarker(tag);
   if(newHp<=0){
     myKillCount++;
     totalKills++;
-    const scoreRef = window._fb.ref('arenaMatches/'+currentMatchId+'/scores/'+myTeam);
+    const scoreRef = window._fb.ref('eraser3d_arenaMatches/'+currentMatchId+'/scores/'+myTeam);
     const curScoreSnap = await window._fb.get(scoreRef);
     const curScore = (curScoreSnap.val() || 0) + 1;
     await window._fb.set(scoreRef, curScore);
@@ -2348,7 +2585,7 @@ async function endBattle(){
     won = localScores.red > localScores.blue;
   } else if(currentMatchId){
     try{
-      const snap = await window._fb.get(window._fb.ref('arenaMatches/'+currentMatchId+'/scores'));
+      const snap = await window._fb.get(window._fb.ref('eraser3d_arenaMatches/'+currentMatchId+'/scores'));
       const scores = snap.val() || {red:0,blue:0};
       const myScore = myTeam==='red' ? scores.red : scores.blue;
       const oppScore = myTeam==='red' ? scores.blue : scores.red;
@@ -2368,10 +2605,17 @@ async function endBattle(){
   winStreak = won ? winStreak+1 : 0;
   saveStatsData();
 
+  // 코인 보상 (승리 시 킬수 비례 추가) - 지금까진 트로피만 있고 코인 보상이 없었음
+  const coinReward = (won ? 60 : 20) + myKillCount*8;
+  userCoins += coinReward;
+  updateCoinUI();
+  saveUserGachaData();
+
   // 결과 화면: 내 캐릭터(총 든 채로)를 비추면서 Victory!/Defeat + 킬/데미지 + 트로피(+랭크) 표시
+  won ? SFX.win() : SFX.lose();
   document.getElementById('mrTitle').textContent = won ? 'Victory!' : 'Defeat';
   document.getElementById('mrTitle').className = 'mrTitle '+(won?'win':'lose');
-  document.getElementById('mrTrophy').textContent = (delta>=0?'+':'')+delta+' 🏆'+(rankResultText?'  ·  '+rankResultText:'');
+  document.getElementById('mrTrophy').textContent = (delta>=0?'+':'')+delta+' 🏆'+(rankResultText?'  ·  '+rankResultText:'')+'  ·  +'+coinReward+' 🪙';
   document.getElementById('mrKills').textContent = myKillCount;
   document.getElementById('mrDamage').textContent = myDamageDealt;
   document.getElementById('matchResultOverlay').style.display = 'flex';
@@ -2538,6 +2782,7 @@ let huntSaveTimer = null;
 function collectHiddenEraser(mesh){
   const item = HIDDEN_ERASERS.find(h=>h.id===mesh.userData.huntId);
   spawnSparkleBurst(mesh.position.clone(), item.color);
+  SFX.hunt();
   scene.remove(mesh);
   huntMeshes.splice(huntMeshes.indexOf(mesh),1);
   foundErasers[item.id] = true;
@@ -2734,6 +2979,7 @@ function spawnSparkleBurst(pos, color){
 
 function collectWorldCoin(coin){
   spawnSparkleBurst(coin.position.clone(), 0xffe27a);
+  SFX.coin();
   scene.remove(coin);
   worldCoins.splice(worldCoins.indexOf(coin),1);
   userCoins += coin.userData.value;
@@ -3401,6 +3647,7 @@ function drawCracks(ctx, cx, cy, w, h, lines, progress, subProgress, intensity){
 
 // 작은 균열 한 번 "쩍" → 짧은 정지 → 전체로 퍼지는 "쩍!" 완전 파열 (한 세트)
 function runCrackBurst(canvas, tierIdx, strong){
+  SFX.gachaCrack();
   return new Promise(resolve=>{
     const root = document.getElementById('gachaResult');
     canvas.width = root.offsetWidth || 300;
@@ -3765,6 +4012,7 @@ function showDamageNumber(worldPos, dmg, tag){
 }
 
 function flashHitMarker(tag){
+  if(tag==='head') SFX.headshot(); else SFX.hit();
   const hm = document.getElementById('hitMarker');
   hm.style.display = 'block';
   hm.style.color = tag==='head' ? '#ff5050' : '#ffffff';
@@ -3854,6 +4102,7 @@ function refreshWeaponVisual(){
 
 // ===== 총구 화염 / 예광탄 시각효과 =====
 function showMuzzleFlash(){
+  SFX.fire();
   const arm = player.userData.rightArm;
   if(!arm || !arm.userData.weaponMesh) return;
   const flashMat = new THREE.SpriteMaterial({color:0xfff2a0, transparent:true, opacity:0.95});
@@ -4120,6 +4369,101 @@ async function maybeShowTutorial(){
   }
 }
 
+// ===== 지우개 카드 (샵 전용 - 실제 게임플레이 장착과는 별개인 순수 수집 카드) =====
+const CARD_WORDS = [
+  '초코','딸기','바닐라','민트','레몬','포도','수박','복숭아','키위','망고',
+  '별빛','달빛','햇살','무지개','구름','눈꽃','단풍','새싹','파도','모래',
+  '고양이','강아지','토끼','판다','여우','부엉이','펭귄','코알라','사슴','다람쥐',
+  '로켓','로봇','마법사','기사','닌자','해적','탐정','우주인','댄서','화가',
+  '벚꽃','장미','튤립','해바라기','선인장','대나무','단풍잎','솔방울',
+];
+const CARD_TIER_DEFS = [
+  {name:'Common', weight:55, count:24},
+  {name:'Rare',   weight:28, count:14},
+  {name:'Epic',   weight:14, count:8},
+  {name:'Legendary', weight:3, count:2},
+];
+const CARD_ERASER_POOL = [];
+(function buildCardPool(){
+  let idx = 0;
+  CARD_TIER_DEFS.forEach((tierDef, tierIdx)=>{
+    const perItemWeight = tierDef.weight/tierDef.count;
+    for(let k=0;k<tierDef.count;k++){
+      const hue = (idx*53)%360;
+      const color = new THREE.Color().setHSL(hue/360, 0.65, 0.58).getHex();
+      CARD_ERASER_POOL.push({
+        id:'card'+idx, name: CARD_WORDS[idx%CARD_WORDS.length]+' 지우개',
+        tier:tierIdx, tierName:tierDef.name, weight:perItemWeight, color
+      });
+      idx++;
+    }
+  });
+})();
+function pickWeightedCard(){
+  const total = CARD_ERASER_POOL.reduce((s,c)=>s+c.weight,0);
+  let r = Math.random()*total;
+  for(const c of CARD_ERASER_POOL){ if(r<c.weight) return c; r-=c.weight; }
+  return CARD_ERASER_POOL[0];
+}
+const userCardCollection = {}; // {cardId: 보유수량}
+async function loadCardCollection(id){
+  await waitFirebase();
+  const snap = await window._fb.get(window._fb.ref('eraser3d_users/'+id+'/cardCollection'));
+  Object.assign(userCardCollection, snap.val()||{});
+}
+async function saveCardCollection(){
+  await waitFirebase();
+  await window._fb.set(window._fb.ref('eraser3d_users/'+window.CURRENT_USER+'/cardCollection'), userCardCollection);
+}
+
+const CARD_PACK_COST = 200;
+const AURA_PACK_COST = 150; // 아우라 뽑기와 동일 가격, 샵에서도 바로 구매 가능
+
+async function openCardPack(){
+  if(userCoins < CARD_PACK_COST){ toast('코인이 부족해!'); return; }
+  userCoins -= CARD_PACK_COST;
+  updateCoinUI();
+  saveUserGachaData();
+
+  const cards = [];
+  for(let i=0;i<6;i++) cards.push(pickWeightedCard());
+  cards.forEach(c=>{ userCardCollection[c.id] = (userCardCollection[c.id]||0)+1; });
+  saveCardCollection();
+
+  const overlay = document.getElementById('cardPackOverlay');
+  const grid = document.getElementById('cardPackGrid');
+  grid.innerHTML = '';
+  cards.forEach(c=>{
+    const cardEl = document.createElement('div');
+    cardEl.className = 'packCard';
+    cardEl.innerHTML = '<div class="packCardBack">🧽</div><div class="packCardFront" style="background:#'+c.color.toString(16).padStart(6,'0')+';"><div class="pcTier">'+c.tierName+'</div><div class="pcName">'+c.name+'</div></div>';
+    grid.appendChild(cardEl);
+  });
+  overlay.style.display = 'flex';
+  await sleep(150);
+  SFX.gachaSpin();
+  Array.from(grid.children).forEach((el,i)=>{
+    setTimeout(()=>{ el.classList.add('flipped'); SFX.coin(); }, 300+i*220);
+  });
+}
+
+function renderCardAlbum(){
+  const list = document.getElementById('cardAlbumList');
+  const owned = Object.keys(userCardCollection).length;
+  document.getElementById('cardAlbumCount').textContent = owned+' / '+CARD_ERASER_POOL.length+' 수집';
+  list.innerHTML = '';
+  CARD_ERASER_POOL.forEach(c=>{
+    const count = userCardCollection[c.id]||0;
+    const has = count>0;
+    const row = document.createElement('div');
+    row.className = 'huntRow'+(has?' found':' locked');
+    const swatch = has ? '<div style="width:16px;height:16px;border-radius:5px;background:#'+c.color.toString(16).padStart(6,'0')+';margin-right:2px;flex:0 0 auto;"></div>' : '';
+    row.innerHTML = '<div class="hIcon">'+(has?'🧽':'🔒')+'</div>'+swatch
+      +'<div class="hInfo"><div class="hName">'+(has?c.name:'???')+'</div><div class="hTier">'+c.tierName+(has&&count>1?' ×'+count:'')+'</div></div>';
+    list.appendChild(row);
+  });
+}
+
 // ===== 길드 시스템 =====
 let myGuildId = null;
 let guildLeaveCooldownUntil = 0;
@@ -4139,7 +4483,7 @@ async function createGuild(name){
   if(Date.now() < guildLeaveCooldownUntil){ toast('탈퇴 후 아직 못 들어가 ('+Math.ceil((guildLeaveCooldownUntil-Date.now())/60000)+'분 남음)'); return false; }
   await waitFirebase();
   const guildId = 'g_'+window.CURRENT_USER+'_'+Date.now();
-  await window._fb.set(window._fb.ref('guilds/'+guildId), {
+  await window._fb.set(window._fb.ref('eraser3d_guilds/'+guildId), {
     name, ownerId: window.CURRENT_USER, createdAt: Date.now(),
     members: {[window.CURRENT_USER]: true}
   });
@@ -4152,7 +4496,7 @@ async function joinGuild(guildId){
   if(myGuildId){ toast('이미 길드에 있어!'); return false; }
   if(Date.now() < guildLeaveCooldownUntil){ toast('탈퇴 후 아직 못 들어가 ('+Math.ceil((guildLeaveCooldownUntil-Date.now())/60000)+'분 남음)'); return false; }
   await waitFirebase();
-  await window._fb.set(window._fb.ref('guilds/'+guildId+'/members/'+window.CURRENT_USER), true);
+  await window._fb.set(window._fb.ref('eraser3d_guilds/'+guildId+'/members/'+window.CURRENT_USER), true);
   myGuildId = guildId;
   await window._fb.set(window._fb.ref('eraser3d_users/'+window.CURRENT_USER+'/guildId'), guildId);
   return true;
@@ -4161,7 +4505,7 @@ async function joinGuild(guildId){
 async function leaveGuild(){
   if(!myGuildId) return;
   await waitFirebase();
-  await window._fb.set(window._fb.ref('guilds/'+myGuildId+'/members/'+window.CURRENT_USER), null);
+  await window._fb.set(window._fb.ref('eraser3d_guilds/'+myGuildId+'/members/'+window.CURRENT_USER), null);
   guildLeaveCooldownUntil = Date.now() + 60*60*1000; // 탈퇴 후 60분간 재가입 불가
   await window._fb.update(window._fb.ref('eraser3d_users/'+window.CURRENT_USER), {
     guildId: null, guildLeaveCooldownUntil
@@ -4171,7 +4515,7 @@ async function leaveGuild(){
 
 async function fetchGuildMemberRows(guildId){
   await waitFirebase();
-  const gSnap = await window._fb.get(window._fb.ref('guilds/'+guildId));
+  const gSnap = await window._fb.get(window._fb.ref('eraser3d_guilds/'+guildId));
   const guild = gSnap.val();
   if(!guild) return null;
   const memberIds = Object.keys(guild.members || {});
@@ -4204,7 +4548,7 @@ async function renderGuildView(){
       if(ok) renderGuildView();
     });
     await waitFirebase();
-    const allGuildsSnap = await window._fb.get(window._fb.ref('guilds'));
+    const allGuildsSnap = await window._fb.get(window._fb.ref('eraser3d_guilds'));
     const allGuilds = allGuildsSnap.val() || {};
     const browseList = document.getElementById('guildBrowseList');
     const ids = Object.keys(allGuilds);
@@ -4217,7 +4561,7 @@ async function renderGuildView(){
         const memberCount = Object.keys(g.members||{}).length;
         const row = document.createElement('div');
         row.className = 'huntRow found';
-        row.innerHTML = '<div class="hIcon">🛡️</div><div class="hInfo"><div class="hName">'+g.name+'</div><div class="hTier">'+memberCount+'명</div></div><div class="hEquip">가입</div>';
+        row.innerHTML = '<div class="hIcon">🛡️</div><div class="hInfo"><div class="hName">'+escapeHtml(g.name)+'</div><div class="hTier">'+memberCount+'명</div></div><div class="hEquip">가입</div>';
         row.addEventListener('click', async ()=>{
           const ok = await joinGuild(gid);
           if(ok) renderGuildView();
@@ -4232,7 +4576,7 @@ async function renderGuildView(){
   if(!data){ myGuildId = null; renderGuildView(); return; }
   box.innerHTML =
     '<div style="text-align:center;margin-bottom:6px;">'
-      +'<div style="font-size:18px;font-weight:bold;">🛡️ '+data.guild.name+'</div>'
+      +'<div style="font-size:18px;font-weight:bold;">🛡️ '+escapeHtml(data.guild.name)+'</div>'
       +'<div style="font-size:13px;color:#a5497a;font-weight:bold;">길드 합산 트로피: 🏆 '+data.totalTrophies.toLocaleString()+'</div>'
     +'</div>'
     +'<div id="guildMemberList" style="display:flex;flex-direction:column;gap:8px;margin:12px 0;"></div>'
@@ -4244,7 +4588,7 @@ async function renderGuildView(){
     row.className = 'huntRow found';
     row.style.background = isMe ? '#fff0f6' : '';
     row.innerHTML = '<div class="hIcon">'+(i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1))+'</div>'
-      +'<div class="hInfo"><div class="hName">'+r.name+(isMe?' (나)':'')+'</div><div class="hTier">'+r.rankLabel+'</div></div>'
+      +'<div class="hInfo"><div class="hName">'+escapeHtml(r.name)+(isMe?' (나)':'')+'</div><div class="hTier">'+r.rankLabel+'</div></div>'
       +'<div class="hEquip">🏆 '+r.trophies.toLocaleString()+'</div>';
     memberList.appendChild(row);
   });
@@ -4273,10 +4617,10 @@ async function renderLeaderboard(){
     const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
     row.style.background = isMe ? '#fff0f6' : '';
     const unfriendBtn = (leaderboardScope==='friends' && !isMe)
-      ? '<button class="unfriendBtn" data-name="'+r.name+'" style="border:none;background:#ffe0e6;color:#c0405a;border-radius:8px;padding:4px 8px;font-size:11px;font-weight:bold;margin-left:6px;">끊기</button>'
+      ? '<button class="unfriendBtn" data-name="'+escapeHtml(r.name)+'" style="border:none;background:#ffe0e6;color:#c0405a;border-radius:8px;padding:4px 8px;font-size:11px;font-weight:bold;margin-left:6px;">끊기</button>'
       : '';
     row.innerHTML = '<div class="hIcon">'+medal+'</div>'
-      +'<div class="hInfo"><div class="hName">'+r.name+(isMe?' (나)':'')+'</div></div>'
+      +'<div class="hInfo"><div class="hName">'+escapeHtml(r.name)+(isMe?' (나)':'')+'</div></div>'
       +'<div class="hEquip">'+def.fmt(r.value)+'</div>'+unfriendBtn;
     list.appendChild(row);
   });
@@ -4363,6 +4707,7 @@ function useAbility(){
   const b = getSelectedBrawler();
   abilityReadyAt = now + b.abilityCd;
   updateAbilityCooldownUI(b);
+  SFX.ability();
 
   camera.getWorldDirection(fireDir);
   const flatDir = new THREE.Vector3(fireDir.x, 0, fireDir.z).normalize();
@@ -4376,14 +4721,14 @@ function useAbility(){
     shieldUntil = now + 4000;
     toast('가디언 보호막! (4초)');
     if(currentMatchId && !isBotMatch){
-      window._fb.update(window._fb.ref('arenaMatches/'+currentMatchId+'/players/'+window.CURRENT_USER), {shieldUntil: Date.now()+4000}).catch(()=>{});
+      window._fb.update(window._fb.ref('eraser3d_arenaMatches/'+currentMatchId+'/players/'+window.CURRENT_USER), {shieldUntil: Date.now()+4000}).catch(()=>{});
     }
   } else if(b.ability === 'heal'){
     myHp = Math.min(100, myHp+40);
     updateMyHpUI();
     toast('체력 +40 회복!');
     if(currentMatchId && !isBotMatch){
-      window._fb.set(window._fb.ref('arenaMatches/'+currentMatchId+'/players/'+window.CURRENT_USER+'/hp'), myHp).catch(()=>{});
+      window._fb.set(window._fb.ref('eraser3d_arenaMatches/'+currentMatchId+'/players/'+window.CURRENT_USER+'/hp'), myHp).catch(()=>{});
     }
   } else if(b.ability === 'bomb'){
     showMuzzleFlash();
@@ -4503,6 +4848,7 @@ function startReload(){
   if(!w || !w.mag || reloading) return;
   if(ammoState[weaponId] === w.mag) return; // 이미 가득 참
   reloading = true;
+  SFX.reload();
   clearInterval(autoFireTimer);
   const reloadBtn = document.getElementById('reloadBtn');
   reloadBtn.classList.add('reloading');
@@ -4544,7 +4890,7 @@ function attemptFire(){
     updateMyHpUI();
     toast(weapon.name+'! 체력 +'+weapon.heal);
     if(currentMatchId && !isBotMatch){
-      window._fb.set(window._fb.ref('arenaMatches/'+currentMatchId+'/players/'+window.CURRENT_USER+'/hp'), myHp).catch(()=>{});
+      window._fb.set(window._fb.ref('eraser3d_arenaMatches/'+currentMatchId+'/players/'+window.CURRENT_USER+'/hp'), myHp).catch(()=>{});
     }
     return;
   }
@@ -4790,6 +5136,7 @@ function update(){
   if(jumpPressed && grounded){
     velY = 0.24;
     grounded = false;
+    SFX.jump();
   }
   jumpPressed = false;
 
@@ -4871,6 +5218,10 @@ function update(){
     checkArenaProximity();
     updateDummyHpBarPositions();
     updateBots();
+  }
+
+  if(currentZone === 'race'){
+    updateRaceProgress();
   }
 
   if(currentZone === 'explore'){
@@ -4987,10 +5338,19 @@ async function showHomeScreen(username){
   await loadStatsData(username);
   await loadFriends(username);
   await loadGuildInfo(username);
+  await loadRaceBest(username);
+  await loadCardCollection(username);
   await maybeShowTutorial();
   startPlaytimeSession();
   updateLevelUI();
   await loadDailyMissions(username);
+}
+
+// 유저가 정한 아이디/길드명 등을 화면에 표시할 때 HTML로 해석되지 않게 이스케이프 (XSS 방지)
+function escapeHtml(str){
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
 
 function toast(msg){
@@ -5029,6 +5389,7 @@ function enterExploreMode(spawnPos, zone){
   currentZone = zone;
   exploreZoneGroup.visible = (zone === 'explore');
   arenaZoneGroup.visible = (zone === 'arena');
+  raceZoneGroup.visible = (zone === 'race');
   if(window.rebuildNameSprite) rebuildNameSprite();
 
   document.getElementById('homeScreen').style.display = 'none';
@@ -5102,6 +5463,34 @@ document.getElementById('navGuild').addEventListener('click', ()=>{
 document.getElementById('guildCloseBtn').addEventListener('click', ()=>{
   document.getElementById('guildOverlay').style.display = 'none';
 });
+
+document.getElementById('navShop').addEventListener('click', ()=>{
+  document.getElementById('shopCoinAmount').textContent = userCoins;
+  document.getElementById('shopOverlay').style.display = 'flex';
+});
+document.getElementById('shopCloseBtn').addEventListener('click', ()=>{
+  document.getElementById('shopOverlay').style.display = 'none';
+});
+document.getElementById('shopBuyAuraBtn').addEventListener('click', ()=>{
+  SFX.click();
+  document.getElementById('shopOverlay').style.display = 'none';
+  document.getElementById('navAuraGacha').click();
+});
+document.getElementById('shopBuyCardBtn').addEventListener('click', async ()=>{
+  SFX.click();
+  await openCardPack();
+  document.getElementById('shopCoinAmount').textContent = userCoins;
+});
+document.getElementById('shopAlbumBtn').addEventListener('click', ()=>{
+  renderCardAlbum();
+  document.getElementById('cardAlbumOverlay').style.display = 'flex';
+});
+document.getElementById('cardAlbumCloseBtn').addEventListener('click', ()=>{
+  document.getElementById('cardAlbumOverlay').style.display = 'none';
+});
+document.getElementById('cardPackOverlay').addEventListener('click', ()=>{
+  document.getElementById('cardPackOverlay').style.display = 'none';
+});
 document.getElementById('leaderboardCloseBtn').addEventListener('click', ()=>{
   document.getElementById('leaderboardOverlay').style.display = 'none';
 });
@@ -5155,6 +5544,8 @@ document.getElementById('exitExploreBtn').addEventListener('click', async ()=>{
   document.getElementById('ammoBadge').style.display = 'none';
   document.getElementById('reloadBtn').style.display = 'none';
   document.getElementById('abilityBtn').style.display = 'none';
+  document.getElementById('raceHud').style.display = 'none';
+  raceActive = false;
   clearInterval(autoFireTimer);
   document.getElementById('exitExploreBtn').style.display = 'none';
   document.getElementById('crosshair').style.display = 'none';
@@ -5288,7 +5679,7 @@ document.getElementById('navGacha').addEventListener('click', ()=>{
 document.getElementById('gachaCloseBtn').addEventListener('click', ()=>{
   document.getElementById('gachaOverlay').style.display = 'none';
 });
-document.getElementById('gachaPullBtn').addEventListener('click', doGachaPull);
+document.getElementById('gachaPullBtn').addEventListener('click', ()=>{ SFX.click(); doGachaPull(); });
 
 document.getElementById('navAuraGacha').addEventListener('click', ()=>{
   document.getElementById('auraIdleMsg').style.display = 'block';
@@ -5302,7 +5693,7 @@ document.getElementById('navAuraGacha').addEventListener('click', ()=>{
 document.getElementById('auraGachaCloseBtn').addEventListener('click', ()=>{
   document.getElementById('auraGachaOverlay').style.display = 'none';
 });
-document.getElementById('auraGachaPullBtn').addEventListener('click', doAuraGachaPull);
+document.getElementById('auraGachaPullBtn').addEventListener('click', ()=>{ SFX.click(); doAuraGachaPull(); });
 document.getElementById('auraCollectionBtn').addEventListener('click', ()=>{
   renderAuraCollectionList();
   document.getElementById('auraCollectionOverlay').style.display = 'flex';
@@ -5346,10 +5737,19 @@ document.getElementById('navMini').addEventListener('click', ()=>{
 document.getElementById('alphabetCloseBtn').addEventListener('click', ()=>{
   document.getElementById('alphabetOverlay').style.display = 'none';
 });
-document.getElementById('navRace').addEventListener('click', ()=>toast('레이싱은 준비 중이야!'));
+document.getElementById('navRace').addEventListener('click', ()=>{
+  goToZone({x:RACE_CHECKPOINTS[0].x, z:RACE_CHECKPOINTS[0].z+4}, 'race');
+  setTimeout(()=>{ startRace(); toast('레이스 시작! 3바퀴 돌아봐'); }, 500);
+});
 document.getElementById('homeSettingsBtn').addEventListener('click', ()=>toast('설정은 준비 중이야!'));
 
 window.showHomeScreen = showHomeScreen;
+
+document.getElementById('sfxMuteBtn').addEventListener('click', ()=>{
+  sfxMuted = !sfxMuted;
+  document.getElementById('sfxMuteBtn').textContent = sfxMuted ? '🔇' : '🔊';
+  if(!sfxMuted) SFX.click();
+});
 
 // ===== PWA: 서비스워커 등록 (홈 화면에 설치 가능하게) =====
 if('serviceWorker' in navigator){
